@@ -1,5 +1,5 @@
 # LudusMagnus
-_“Force has no place where there is need of skill.”_ – Herodotus 
+> _“Force has no place where there is need of skill.”_ – Herodotus 
 
 
 LudusMagnus is an automation project for creating CTF (Capture-The-Flag) and Defend training environments.
@@ -74,3 +74,5 @@ ForEach-Object { Install-Module -Name $_ -Scope AllUsers -Force -Verbose }
 ## Costs
 This code is open-source, therefore free for private use. The Azure Cloud costs for hosting the environment is based on Azure pricing (which are subject to change based on Microsoft decision).
 While considering that, every new account that signs up for Azure subscriptions receives 200$ for free (Thanks Microsoft!) and currently (Nov 2018) the costs of running this environment for 24 hours is approx. 160$.
+
+> created by Martin Schvartzman and Roei Shepherd (@x_Freedom)
