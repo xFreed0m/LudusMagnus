@@ -4,7 +4,7 @@ sudo apt-get -y update
 apt-cache policy docker-ce
 sudo apt-get install -y docker-ce
 sudo docker run -d -it -p 2222:22 --rm vulhub/libssh:0.8.1
-echo $0  > flag6.txt
+echo $1  > flag6.txt
 id=$(docker ps | awk '{print $1}' | tail -1)
-docker cp flag6.txt $id:/flag6.txt
+docker cp flag6.txt $id:/etc/flag6.txt
 rm flag6.txt
