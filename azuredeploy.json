@@ -1,0 +1,827 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "ClientAllowedIP": {
+      "type": "string",
+      "metadata": {
+        "description": "The IPAddress CIDR for RDP access to the JumpBox server"
+      },
+      "defaultValue": "0.0.0.0/32"
+    },
+    "VmAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The local VM Administrator password"
+      },
+      "defaultValue": "P@55w0rd!"
+    },
+    "DomainPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The Domain Administrator password"
+      },
+      "defaultValue": "P@55w0rd!"
+    },
+    "Flag0Value": {
+      "type": "string"
+    },
+    "Flag1Value": {
+      "type": "string"
+    },
+    "Flag2Value": {
+      "type": "string"
+    },
+    "Flag3Value": {
+      "type": "string"
+    },
+    "Flag4Value": {
+      "type": "string"
+    },
+    "Flag5Value": {
+      "type": "string"
+    },
+    "Flag6Value": {
+      "type": "string"
+    },
+    "Flag7Value": {
+      "type": "string"
+    },
+    "Flag8Value": {
+      "type": "string"
+    },
+    "Flag9Value": {
+      "type": "string"
+    }
+  },
+  "variables": {
+
+    "deployment-vnetName": "deployment-vnet",
+    "deployment-vnetPrefix": "10.0.0.0/16",
+    "deployment-vnetSubnetName": "defaultSubnet",
+    "deployment-vnetSubnetPrefix": "10.0.0.0/24",
+    "deployment-nsgName": "deployment-nsg",
+    "deployment-publicIpName": "deployment-publicIp",
+
+    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('deployment-vnetName'))]",
+    "SubnetRef": "[concat(variables('VnetID'), '/subnets/', variables('deployment-vnetSubnetName'))]",
+
+    "WindowsImagePublisher": "MicrosoftWindowsServer",
+    "WindowsImageOffer": "WindowsServer",
+    "LinuxImagePublisher": "Canonical",
+    "LinuxImageOffer": "UbuntuServer",
+    "SqlImagePublisher": "MicrosoftSQLServer",
+    "SqlImageOffer": "SQL2014SP3-WS2012R2",
+    "SqlImageSku": "express",
+    "SqlSaUser": "sa",
+    "SqlSaPassword": "[parameters('VmAdminPassword')]",
+
+    "storageAccountType": "Standard_LRS",
+    "OSDiskName": "OSDisk",
+    "DataDiskName": "DataDisk",
+    "VmAdminUserName": "sadmind",
+
+    "ADDSName": "ADDS",
+    "ADDSVmSize": "Standard_D2_v2",
+    "ADDSOsImage": "2016-Datacenter",
+    "ADDSNicName": "[concat(variables('ADDSName'), '-NIC')]",
+    "ADDSStaticIP": "10.0.0.4",
+
+    "JumpBoxName": "JumpBox",
+    "JumpBoxVmSize": "Standard_D2_v2",
+    "JumpBoxOsImage": "2016-Datacenter",
+    "JumpBoxNicName": "[concat(variables('JumpBoxName'), '-NIC')]",
+    "JumpBoxStaticIP": "10.0.0.5",
+
+    "IISName": "IIS",
+    "IISVmSize": "Standard_D2_v2",
+    "IISOsImage": "2008-R2-SP1",
+    "IISNicName": "[concat(variables('IISName'), '-NIC')]",
+    "IISStaticIP": "10.0.0.6",
+
+    "SQLName": "SQL",
+    "SQLVmSize": "Standard_D2_v2",
+    "SQLNicName": "[concat(variables('SQLName'), 'NIC')]",
+    "SQLStaticIP": "10.0.0.7",
+
+    "FSName": "FS",
+    "FSVmSize": "Standard_D2_v2",
+    "FSOsImage": "2016-Datacenter-Server-Core",
+    "FSNicName": "[concat(variables('FSName'), '-NIC')]",
+    "FSStaticIP": "10.0.0.8",
+
+    "LinuxName": "LNX",
+    "LinuxVmSize": "Standard_D2_v2",
+    "LinuxOsImage": "16.04.0-LTS",
+    "LinuxNicName": "[concat(variables('LinuxName'), '-NIC')]",
+    "LinuxStaticIP": "10.0.0.9",
+
+    "DomainName": "sandbox.local",
+    "DscUrl": "[uri(deployment().properties.templateLink.uri, 'DSC/DSC.zip')]",
+    "DscExtensionUpdateTagVersion": "[guid('random', uniqueString(deployment().name))]",
+    "LinuxCommandToExecute": "./runlibssh.sh",
+    "LinuxScriptUri": "[uri(deployment().properties.templateLink.uri, 'scripts/runlibssh.sh')]",
+    "deploymentUrl-VNET": "[uri(deployment().properties.templateLink.uri, 'nestedtemplates/vnet-with-dns-server.json')]"
+  },
+  "resources": [{
+      "name": "[variables('deployment-vnetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('deployment-vnetPrefix')]"
+          ]
+        },
+        "subnets": [{
+          "name": "[variables('deployment-vnetSubnetName')]",
+          "properties": {
+            "addressPrefix": "[variables('deployment-vnetSubnetPrefix')]"
+          }
+        }]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('deployment-nsgName')]",
+      "apiVersion": "2018-02-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [{
+          "name": "RDP",
+          "properties": {
+            "provisioningState": "Succeeded",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "3389",
+            "sourceAddressPrefix": "[parameters('ClientAllowedIP')]",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 300,
+            "direction": "Inbound",
+            "sourcePortRanges": [],
+            "destinationPortRanges": [],
+            "sourceAddressPrefixes": [],
+            "destinationAddressPrefixes": []
+          }
+        }]
+      },
+      "dependsOn": []
+    },
+    {
+      "name": "[variables('JumpBoxNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('deployment-vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('deployment-publicIpName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('deployment-nsgName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [{
+          "name": "ipconfig1",
+          "properties": {
+            "privateIPAllocationMethod": "Static",
+            "privateIPAddress": "[variables('JumpBoxStaticIP')]",
+            "subnet": {
+              "id": "[variables('SubnetRef')]"
+            },
+            "publicIPAddress": {
+              "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('deployment-publicIpName'))]"
+            },
+            "networkSecurityGroup": {
+              "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('deployment-nsgName'))]"
+            }
+          }
+        }]
+      }
+    },
+    {
+      "name": "[variables('deployment-publicIpName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "name": "[variables('ADDSNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('deployment-vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [{
+          "name": "ipconfig1",
+          "properties": {
+            "privateIPAllocationMethod": "Static",
+            "privateIPAddress": "[variables('ADDSStaticIP')]",
+            "subnet": {
+              "id": "[variables('SubnetRef')]"
+            }
+          }
+        }]
+      }
+    },
+    {
+      "name": "[variables('IISNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('deployment-vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [{
+          "name": "ipconfig1",
+          "properties": {
+            "privateIPAllocationMethod": "Static",
+            "privateIPAddress": "[variables('IISStaticIP')]",
+            "subnet": {
+              "id": "[variables('SubnetRef')]"
+            }
+          }
+        }]
+      }
+    },
+    {
+      "name": "[variables('SqlNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('deployment-vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [{
+          "name": "ipconfig1",
+          "properties": {
+            "privateIPAllocationMethod": "Static",
+            "privateIPAddress": "[variables('SQLStaticIP')]",
+            "subnet": {
+              "id": "[variables('SubnetRef')]"
+            }
+          }
+        }]
+      }
+    },
+    {
+      "name": "[variables('FSNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('deployment-vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [{
+          "name": "ipconfig1",
+          "properties": {
+            "privateIPAllocationMethod": "Static",
+            "privateIPAddress": "[variables('FSStaticIP')]",
+            "subnet": {
+              "id": "[variables('SubnetRef')]"
+            }
+          }
+        }]
+      }
+    },
+    {
+      "name": "[variables('LinuxNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('deployment-vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [{
+          "name": "ipconfig1",
+          "properties": {
+            "privateIPAllocationMethod": "Static",
+            "privateIPAddress": "[variables('LinuxStaticIP')]",
+            "subnet": {
+              "id": "[variables('SubnetRef')]"
+            }
+          }
+        }]
+      }
+    },
+    {
+      "name": "[variables('ADDSName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('ADDSNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('ADDSVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('ADDSName')]",
+          "adminUsername": "[variables('VmAdminUserName')]",
+          "adminPassword": "[parameters('VmAdminPassword')]"
+        },
+        "licenseType": "Windows_Server",
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('WindowsImagePublisher')]",
+            "offer": "[variables('WindowsImageOffer')]",
+            "sku": "[variables('ADDSOsImage')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('ADDSName'), '-', variables('OSDiskName'))]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
+          },
+          "dataDisks": [{
+            "name": "[concat(variables('ADDSName'), '-', variables('DataDiskName'))]",
+            "caching": "None",
+            "diskSizeGB": 10,
+            "lun": 0,
+            "createOption": "Empty",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
+          }]
+        },
+        "networkProfile": {
+          "networkInterfaces": [{
+            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('ADDSNicName'))]"
+          }]
+        }
+      },
+      "resources": [{
+        "name": "CreateADForest",
+        "type": "extensions",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "2018-06-01",
+        "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', variables('ADDSName'))]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.Powershell",
+          "type": "DSC",
+          "typeHandlerVersion": "2.9",
+          "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "variables('DscExtensionUpdateTagVersion')",
+          "settings": {
+            "wmfVersion": "latest",
+            "configurationFunction": "DSC.ps1\\ADDS",
+            "modulesUrl": "[variables('DscUrl')]",
+            "Properties": {
+              "DomainName": "[variables('DomainName')]",
+              "UserCredential": {
+                "UserName": "[variables('VmAdminUserName')]",
+                "Password": "PrivateSettingsRef:DomainPassword"
+              },
+              "Flag9Value": "[parameters('Flag9Value')]"
+            }
+          },
+          "protectedSettings": {
+            "Items": {
+              "DomainPassword": "[parameters('DomainPassword')]"
+            }
+          }
+        }
+      }]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "UpdateVNetDNS",
+      "apiVersion": "2016-02-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('ADDSName'), 'CreateADForest')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('deploymentUrl-VNET')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[variables('deployment-vnetName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[variables('deployment-vnetPrefix')]"
+          },
+          "subnetName": {
+            "value": "[variables('deployment-vnetSubnetName')]"
+          },
+          "subnetRange": {
+            "value": "[variables('deployment-vnetSubnetPrefix')]"
+          },
+          "DNSServerAddress": {
+            "value": [
+              "[variables('ADDSStaticIP')]"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "[variables('JumpBoxName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('JumpBoxVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('JumpBoxName')]",
+          "adminUsername": "[variables('VmAdminUserName')]",
+          "adminPassword": "[parameters('VmAdminPassword')]"
+        },
+        "licenseType": "Windows_Server",
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('WindowsImagePublisher')]",
+            "offer": "[variables('WindowsImageOffer')]",
+            "sku": "[variables('JumpBoxOsImage')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('JumpBoxName'), '-', variables('OSDiskName'))]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [{
+            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
+          }]
+        }
+      },
+      "resources": [{
+        "name": "[concat(variables('JumpBoxName'),'/DSC')]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "2018-06-01",
+        "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', variables('JumpBoxName'))]",
+          "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('ADDSName'), 'CreateADForest')]",
+          "[resourceId('Microsoft.Resources/deployments', 'UpdateVNetDNS')]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.Powershell",
+          "type": "DSC",
+          "typeHandlerVersion": "2.9",
+          "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "variables('DscExtensionUpdateTagVersion')",
+          "settings": {
+            "wmfVersion": "latest",
+            "configurationFunction": "DSC.ps1\\JumpBox",
+            "modulesUrl": "[variables('DscUrl')]",
+            "Properties": {
+              "DomainName": "[variables('DomainName')]",
+              "ComputerName": "[variables('JumpBoxName')]",
+              "UserCredential": {
+                "UserName": "[variables('VmAdminUserName')]",
+                "Password": "PrivateSettingsRef:DomainPassword"
+              },
+              "Flag0Value": "[parameters('Flag0Value')]"
+            }
+          },
+          "protectedSettings": {
+            "Items": {
+              "DomainPassword": "[parameters('DomainPassword')]"
+            }
+          }
+        }
+      }]
+    },
+    {
+      "name": "[variables('IISName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('IISNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('IISVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('IISName')]",
+          "adminUsername": "[variables('VmAdminUserName')]",
+          "adminPassword": "[parameters('VmAdminPassword')]"
+        },
+        "licenseType": "Windows_Server",
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('WindowsImagePublisher')]",
+            "offer": "[variables('WindowsImageOffer')]",
+            "sku": "[variables('IISOsImage')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('IISName'), '-', variables('OSDiskName'))]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [{
+            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('IISNicName'))]"
+          }]
+        }
+      },
+      "resources": [{
+        "name": "[concat(variables('IISName'),'/DSC')]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "2018-06-01",
+        "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', variables('IISName'))]",
+          "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('ADDSName'), 'CreateADForest')]",
+          "[resourceId('Microsoft.Resources/deployments', 'UpdateVNetDNS')]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.Powershell",
+          "type": "DSC",
+          "typeHandlerVersion": "2.9",
+          "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "variables('DscExtensionUpdateTagVersion')",
+          "settings": {
+            "wmfVersion": "latest",
+            "configurationFunction": "DSC.ps1\\IIS",
+            "modulesUrl": "[variables('DscUrl')]",
+            "Properties": {
+              "DomainName": "[variables('DomainName')]",
+              "ComputerName": "[variables('IISName')]",
+              "UserCredential": {
+                "UserName": "[variables('VmAdminUserName')]",
+                "Password": "PrivateSettingsRef:DomainPassword"
+              },
+              "Flag8Value": {
+                "UserName": "[variables('VmAdminUserName')]",
+                "Password": "PrivateSettingsRef:DomainPassword"
+              }
+            }
+          },
+          "protectedSettings": {
+            "Items": {
+              "DomainPassword": "[parameters('DomainPassword')]",
+              "Flag8Value": "[parameters('Flag8Value')]"
+            }
+          }
+        }
+      }]
+    },
+    {
+      "name": "[variables('SQLName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('SQLNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('SQLVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('SQLName')]",
+          "adminUsername": "[variables('VmAdminUserName')]",
+          "adminPassword": "[parameters('VmAdminPassword')]"
+        },
+        "licenseType": "Windows_Server",
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('SqlImagePublisher')]",
+            "offer": "[variables('SqlImageOffer')]",
+            "sku": "[variables('SqlImageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('SQLName'), '-', variables('OSDiskName'))]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [{
+            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('SQLNicName'))]"
+          }]
+        }
+      },
+      "resources": [{
+        "name": "[concat(variables('SQLName'),'/DSC')]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "2018-06-01",
+        "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', variables('SQLName'))]",
+          "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('ADDSName'), 'CreateADForest')]",
+          "[resourceId('Microsoft.Resources/deployments', 'UpdateVNetDNS')]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.Powershell",
+          "type": "DSC",
+          "typeHandlerVersion": "2.9",
+          "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "variables('DscExtensionUpdateTagVersion')",
+          "settings": {
+            "wmfVersion": "latest",
+            "configurationFunction": "DSC.ps1\\SQL",
+            "modulesUrl": "[variables('DscUrl')]",
+            "Properties": {
+              "DomainName": "[variables('DomainName')]",
+              "ComputerName": "[variables('SQLName')]",
+              "UserCredential": {
+                "UserName": "[variables('VmAdminUserName')]",
+                "Password": "PrivateSettingsRef:DomainPassword"
+              },
+              "SQLAuthCreds": {
+                "UserName": "[variables('VmAdminUserName')]",
+                "Password": "PrivateSettingsRef:DomainPassword"
+              },
+              "DatabaseName": "[variables('DomainName')]",
+              "Flag5Value": "[parameters('Flag5Value')]"
+            }
+          },
+          "protectedSettings": {
+            "Items": {
+              "DomainPassword": "[parameters('DomainPassword')]"
+            }
+          }
+        }
+      }]
+    },
+    {
+      "name": "[variables('FSName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('FSNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('FSVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('FSName')]",
+          "adminUsername": "[variables('VmAdminUserName')]",
+          "adminPassword": "[parameters('VmAdminPassword')]"
+        },
+        "licenseType": "Windows_Server",
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('WindowsImagePublisher')]",
+            "offer": "[variables('WindowsImageOffer')]",
+            "sku": "[variables('FSOsImage')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('FSName'), '-', variables('OSDiskName'))]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [{
+            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('FSNicName'))]"
+          }]
+        }
+      },
+      "resources": [{
+        "name": "[concat(variables('FSName'),'/DSC')]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "2018-06-01",
+        "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', variables('FSName'))]",
+          "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('ADDSName'), 'CreateADForest')]",
+          "[resourceId('Microsoft.Resources/deployments', 'UpdateVNetDNS')]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.Powershell",
+          "type": "DSC",
+          "typeHandlerVersion": "2.9",
+          "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "variables('DscExtensionUpdateTagVersion')",
+          "settings": {
+            "wmfVersion": "latest",
+            "configurationFunction": "DSC.ps1\\FS",
+            "modulesUrl": "[variables('DscUrl')]",
+            "Properties": {
+              "DomainName": "[variables('DomainName')]",
+              "ComputerName": "[variables('FSName')]",
+              "UserCredential": {
+                "UserName": "[variables('VmAdminUserName')]",
+                "Password": "PrivateSettingsRef:DomainPassword"
+              },
+              "Flag4Value": "[parameters('Flag4Value')]"
+            }
+          },
+          "protectedSettings": {
+            "Items": {
+              "DomainPassword": "[parameters('DomainPassword')]"
+            }
+          }
+        }
+      }]
+    },
+    {
+      "name": "[variables('LinuxName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('LinuxNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('LinuxVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('LinuxName')]",
+          "adminUsername": "[variables('VmAdminUserName')]",
+          "adminPassword": "[parameters('VmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('LinuxImagePublisher')]",
+            "offer": "[variables('LinuxImageOffer')]",
+            "sku": "[variables('LinuxOsImage')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('LinuxName'), '-', variables('OSDiskName'))]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [{
+            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('LinuxNicName'))]"
+          }]
+        }
+      },
+      "resources": [{
+        "name": "[concat(variables('LinuxName'),'/CSE')]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "2018-06-01",
+        "dependsOn": [
+          "[resourceId('Microsoft.Compute/virtualMachines', variables('LinuxName'))]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "typeHandlerVersion": "2.0",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "fileUris": "[split(variables('LinuxScriptUri'), ' ')]",
+            "commandToExecute": "[variables('LinuxCommandToExecute')]"
+          }
+        }
+      }]
+    }
+  ],
+  "outputs": {
+    "IPAddress": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('deployment-publicIpName'))).IpAddress]"
+    },
+    "DscExtensionUpdateTagVersion": {
+      "type": "string",
+      "value": "[variables('DscExtensionUpdateTagVersion')]"
+    }
+  }
+}
