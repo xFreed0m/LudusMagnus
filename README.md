@@ -91,4 +91,4 @@ Once you click the "I'm done" button, the flags you entered will be checked if t
 This code is open-source, therefore free for private use. The Azure Cloud costs for hosting the environment is based on Azure pricing (which are subject to change based on Microsoft decision).
 While considering that, every new account that signs up for Azure subscriptions receives 200$ for free (Thanks Microsoft!) and currently (Nov 2018) the costs of running this environment for 24 hours is approx. 160$.
 
-> created by Martin Schvartzman and Roei Sherman (@x_Freedom)
+> created by Martin Schvartzman (@martin77s) and Roei Sherman (@x_Freedom)
