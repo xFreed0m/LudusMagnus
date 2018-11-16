@@ -69,9 +69,23 @@ Install-Module -Name Az -Scope AllUsers -Force -Verbose
 To install the needed DSC Modules, open PowerShell, and run the following command:
 
 ```powershell
-'ComputerManagementDsc', 'SqlServerDsc', 'xActiveDirectory', 'xNetworking', 'xPendingReboot', 'xStorage', 'xWebAdministration' |
+'ComputerManagementDsc', 'SqlServerDsc', 'xActiveDirectory', 'xNetworking', 'xPendingReboot', 'xStorage', 'xPSDesiredStateConfiguration', 'xWebAdministration' |
 ForEach-Object { Install-Module -Name $_ -Scope AllUsers -Force -Verbose }
 ```
+## Attacker instructions
+After installing all the prerequisites above, run ```powershell ./Start-LudusMagnus.ps1``` in order to deploy the needed environment. Once the deployment is done, your favourite web browser will open up on the web application page that contains the following:
+1. The JumpBox IP address you should RDP into
+2. The credentials to use on the JumpBox -  *the JumpBox is your starting point, and the credentials belongs to a user in the domain*.
+3. A timer.
+4. 10 flag input field to paste in the flags you would obtain - *You won't be able to know if the flags are valid until you finish the test and submit all of them*
+4. a "I'm done" button that can be used also if you didn't obtained all the flags
+
+Once you click the "I'm done" button, the flags you entered will be checked if they are correct, and a grade will be calculated based on:
+- How many flags are correct
+- The value of each flag (some of them worth more points than others)
+- Overall time passed from starting the test until pressing the "I'm done" button
+
+**Once again, make sure to tear-down the environment when you are done, or the costs will be billed to your Azure subscription!**
 
 ## Costs
 This code is open-source, therefore free for private use. The Azure Cloud costs for hosting the environment is based on Azure pricing (which are subject to change based on Microsoft decision).
