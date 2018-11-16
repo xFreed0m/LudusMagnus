@@ -3,7 +3,7 @@
 # Select-AzSubscription -Subscription '00000000-0000-0000-0000-000000000000'
 
 ### DO NOT CHANGE ANYTHING BELOW THIS LINE ###
-$tamplateBaseUrl = 'https://raw.githubusercontent.com/martin77s/PracticeSandbox/master'
+$tamplateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master'
 $location = 'westeurope'
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
 $resourceGroupName = 'Sandbox'

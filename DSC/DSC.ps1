@@ -1,3 +1,4 @@
+#region Configurations
 Configuration ADDS {
 
     [CmdletBinding()]
@@ -5,7 +6,8 @@ Configuration ADDS {
     param (
         [string] $DomainName,
         [PSCredential] $UserCredential,
-        [string] $Flag9Value
+        [string] $Flag9Value,
+        [string] $ADUsersUri
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
@@ -13,10 +15,11 @@ Configuration ADDS {
     Import-DscResource -ModuleName xPendingReboot
     Import-DscResource -ModuleName StorageDsc
     Import-DscResource -ModuleName NetworkingDsc
+    Import-DscResource -ModuleName xPSDesiredStateConfiguration
 
     $interfaceAlias = Get-NetAdapter | Where-Object { $_.Name -Like 'Ethernet*' } | Select-Object -First 1 -ExpandProperty Name
     $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
+        ('{0}\{1}' -f $DomainName, $UserCredential.UserName), ($UserCredential.Password)
     )
 
     New-Object System.Management.Automation.PSCredential -ArgumentList (
@@ -48,14 +51,14 @@ Configuration ADDS {
 
         Write-Verbose 'Creating configuration for the Windows Features:' -Verbose
         $Features = @(
+            'AD-Domain-Services',
             'RSAT-ADDS',
             'RSAT-AD-Tools',
             'RSAT-AD-PowerShell',
-            'RSAT-AD-AdminCenter',
             'RSAT-Role-Tools',
+            'RSAT-DNS-Server',
             'GPMC',
-            'DNS',
-            'RSAT-DNS-Server'
+            'DNS'
         )
 
         $Features.ForEach( {
@@ -66,16 +69,18 @@ Configuration ADDS {
             }
         } )
 
-        Write-Verbose 'Creating configuration for ADDS_Install' -Verbose
-        WindowsFeature ADDS_Install {
-            Ensure = 'Present'
-            Name   = 'AD-Domain-Services'
+        Write-Verbose 'Creating configuration for DnsServerAddress' -Verbose
+        DnsServerAddress DnsServerAddress {
+            Address        = '127.0.0.1'
+            InterfaceAlias = $interfaceAlias
+            AddressFamily  = 'IPv4'
+            DependsOn      = "[WindowsFeature]DNS"
         }
 
-        User ChangeDomainAdminPassword {
-            Ensure   = 'Present'
-            UserName = $UserCredential.UserName
-            Password = $DomainCreds
+        Write-Verbose 'Creating configuration for CreateUsersCsv' -Verbose
+        xRemoteFile CreateADUsersCsv {
+            Uri             = $ADUsersUri
+            DestinationPath = 'C:\Windows\Temp\ADUsers.csv'
         }
 
         Write-Verbose 'Creating configuration for CreateForest' -Verbose
@@ -86,15 +91,25 @@ Configuration ADDS {
             DatabasePath                  = "F:\ADDS\NTDS"
             LogPath                       = "F:\ADDS\NTDS"
             SysvolPath                    = "F:\ADDS\Sysvol"
-            DependsOn                     = '[WindowsFeature]ADDS_Install', '[Disk]ADDataDisk', '[User]ChangeDomainAdminPassword'
+            DependsOn                     = '[WindowsFeature]AD-Domain-Services', '[Disk]ADDataDisk', '[xRemoteFile]CreateADUsersCsv'
         }
 
-        Write-Verbose 'Creating configuration for DnsServerAddress' -Verbose
-        DnsServerAddress DnsServerAddress {
-            Address        = '127.0.0.1'
-            InterfaceAlias = $interfaceAlias
-            AddressFamily  = 'IPv4'
-            DependsOn      = "[WindowsFeature]DNS"
+        Write-Verbose 'Creating configuration for CreateUsers' -Verbose
+        script CreateADUsers {
+
+            TestScript = {
+                Test-Path -Path 'C:\Windows\Temp\ADUsers.flag'
+            }
+
+            GetScript = {
+                @{Result = (Get-Content -Path 'C:\Windows\Temp\ADUsers.flag' -Value (Get-Date))}
+            }
+
+            SetScript = {
+                Create-ADUsers -CsvPath 'C:\Windows\Temp\ADUsers.csv'
+                Set-Content -Path 'C:\Windows\Temp\ADUsers.flag' -Value (Get-Date)
+            }
+            DependsOn = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
         }
     }
 }
@@ -117,6 +132,9 @@ Configuration JumpBox {
 
     $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
+    )
+    $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
+        ($UserCredential.UserName), (Generate-Password | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -153,6 +171,13 @@ Configuration JumpBox {
             Type            = "File"
             DestinationPath = "C:\Windows\system32\drivers\etc\flag0.txt"
             Contents        = "flag0:{$Flag0Value}"
+        }
+
+        Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
+        User ChangeLocalAdminPassword {
+            Ensure   = 'Present'
+            UserName = $UserCredential.UserName
+            Password = $NewLocalCreds
         }
 
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose
@@ -193,9 +218,12 @@ Configuration SQL {
     Import-DscResource -ModuleName ComputerManagementDsc
     Import-DscResource -ModuleName SqlServerDsc
 
-    $InstanceName = 'MSSQLSERVER'
+    $InstanceName = '(local)'
     $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
+    )
+    $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
+        ($UserCredential.UserName), (Generate-Password | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -289,12 +317,18 @@ Configuration SQL {
 
         }
 
+        Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
+        User ChangeLocalAdminPassword {
+            Ensure   = 'Present'
+            UserName = $UserCredential.UserName
+            Password = $NewLocalCreds
+        }
+
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose
         xWaitForADDomain WaitForDomain {
             DomainName       = $DomainName
             RetryCount       = 60
             RetryIntervalSec = 30
-
         }
 
         Write-Verbose 'Creating configuration for DomainJoin' -Verbose
@@ -326,6 +360,9 @@ Configuration IIS {
 
     $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
+    )
+    $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
+        ($UserCredential.UserName), (Generate-Password | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -376,6 +413,12 @@ Configuration IIS {
             DependsOn       = '[xWebAppPool]Flag8'
         }
 
+        Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
+        User ChangeLocalAdminPassword {
+            Ensure   = 'Present'
+            UserName = $UserCredential.UserName
+            Password = $NewLocalCreds
+        }
 
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose
         xWaitForADDomain WaitForDomain {
@@ -403,6 +446,7 @@ Configuration FS {
         [string] $DomainName,
         [string] $ComputerName,
         [PSCredential] $UserCredential,
+        [string] $Flag3Value,
         [string] $Flag4Value
     )
 
@@ -414,6 +458,9 @@ Configuration FS {
     $SharePath = 'C:\Windows\IdentityCRL\production'
     $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
+    )
+    $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
+        ($UserCredential.UserName), (Generate-Password | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -440,20 +487,44 @@ Configuration FS {
 
         Write-Verbose 'Creating configuration for SalariesShare' -Verbose
         xSmbShare SalariesShare {
-            Ensure = 'Present'
-            Name   = 'Salaries'
-            Path = $SharePath
+            Ensure     = 'Present'
+            Name       = 'Salaries'
+            Path       = $SharePath
             ReadAccess = 'Everyone'
-            DependsOn = '[File]SalariesFolder'
+            DependsOn  = '[File]SalariesFolder'
+        }
+
+        Write-Verbose 'Creating configuration for Flag 3' -Verbose
+        File Flag4 {
+            Ensure          = 'Present'
+            Type            = 'File'
+            DestinationPath = "$($SharePath)\Salaries.csv"
+            Contents        = "CTF,flag3:{$Flag3Value}"
+            DependsOn       = '[xSmbShare]SalariesShare'
         }
 
         Write-Verbose 'Creating configuration for Flag 4' -Verbose
         File Flag4 {
             Ensure          = 'Present'
             Type            = 'File'
-            DestinationPath = "$($SharePath)\flag4.csv"
-            Contents        = "flag4,{$Flag4Value}"
-            DependsOn = '[xSmbShare]SalariesShare'
+            DestinationPath = "$($SharePath)\ADS.md"
+            Contents        = "NotRedHerring"
+            DependsOn       = '[xSmbShare]SalariesShare'
+        }
+
+        Write-Verbose 'Creating configuration for Flag 4' -Verbose
+        Script Flag4Stream {
+            TestScript = { (Get-Content -Path "$($SharePath)\ADS.md" -Stream DATA) -eq $using:Flag4Value }
+            GetScript = { @{ Result = (Get-Content -Path "$($SharePath)\ADS.md" -Stream DATA) } }
+            SetScript = { Set-Content -Path "$($SharePath)\ADS.md" -Value $using:Flag4Value -Stream DATA }
+            DependsOn = '[File]Flag4'
+        }
+
+        Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
+        User ChangeLocalAdminPassword {
+            Ensure   = 'Present'
+            UserName = $UserCredential.UserName
+            Password = $NewLocalCreds
         }
 
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose
@@ -472,3 +543,105 @@ Configuration FS {
         }
     }
 }
+#endregion
+
+#region Helper functions
+function Generate-Password {
+    param([string]$Prefix = '', $Length = 24)
+    $Suffix = ([char[]]([char]33..[char]95) + ([char[]]([char]97..[char]126)) + 0..9 |
+        Sort-Object {Get-Random})[0..$Length] -join ''
+    ($Prefix + $Suffix).Substring(0,$Length)
+}
+
+
+function Create-ADUsers {
+    param(
+        $CsvPath = 'C:\Windows\Temp\ADUsers.csv'
+    )
+
+    $Domain   = Get-ADDomain
+    $DomainDN = $Domain.DistinguishedName
+    $Forest   = $Domain.Forest
+    $ParentOU = New-ADOrganizationalUnit -Name 'Accounts' -Path $DomainDN -Verbose -ErrorAction Stop -PassThru
+    $UserOU   = New-ADOrganizationalUnit -Name 'Users' -Path $ParentOU.DistinguishedName -Verbose -PassThru -ErrorAction Stop
+    $GroupOU  = New-ADOrganizationalUnit -Name 'Groups' -Path $ParentOU.DistinguishedName -Verbose -PassThru -ErrorAction Stop
+    $Content  = Import-CSV -Path $CsvPath -ErrorAction Stop | Sort-Object -Property State
+
+    Set-ADDefaultDomainPasswordPolicy $Forest -ComplexityEnabled $False -MaxPasswordAge '1000' -PasswordHistoryCount 0 -MinPasswordAge 0
+
+    $Departments =  (
+        @{'Name' = 'Accounting'; Positions = ('Manager', 'Accountant', 'Data Entry')},
+        @{'Name' = 'Human Resources'; Positions = ('Manager', 'Administrator', 'Officer', 'Coordinator')},
+        @{'Name' = 'Sales'; Positions = ('Manager', 'Representative', 'Consultant', 'Senior Vice President')},
+        @{'Name' = 'Marketing'; Positions = ('Manager', 'Coordinator', 'Assistant', 'Specialist')},
+        @{'Name' = 'Engineering'; Positions = ('Manager', 'Engineer', 'Scientist')},
+        @{'Name' = 'Consulting'; Positions = ('Manager', 'Consultant')},
+        @{'Name' = 'Information Technology'; Positions = ('Manager', 'Engineer', 'Technician')},
+        @{'Name' = 'Planning'; Positions = ('Manager', 'Engineer')},
+        @{'Name' = 'Contracts'; Positions = ('Manager', 'Coordinator', 'Clerk')},
+        @{'Name' = 'Purchasing'; Positions = ('Manager', 'Coordinator', 'Clerk', 'Purchaser', 'Senior Vice President')}
+    )
+
+    $Users = $Content |
+        Select-Object  @{Name='Name';Expression={"$($_.GivenName) $($_.Surname)"}},
+            @{Name='SamAccountName'; Expression={"$($_.GivenName)$($_.Surname.Substring(0,3))"}},
+            @{Name='UserPrincipalName'; Expression={"$($_.GivenName)$($_.Surname.Substring(0,3))@$($Forest)"}},
+            @{Name='EmailAddress'; Expression={"$($_.GivenName)$($_.Surname.Substring(0,3))@$($Forest)"}},
+            @{Name='GivenName'; Expression={$_.GivenName}},
+            @{Name='Surname'; Expression={$_.Surname}},`
+            @{Name='DisplayName'; Expression={"$($_.GivenName) $($_.MiddleInitial). $($_.Surname)"}},
+            @{Name='City'; Expression={$_.City}},
+            @{Name='StreetAddress'; Expression={$_.StreetAddress}},
+            @{Name='State'; Expression={$_.State}},
+            @{Name='Country'; Expression={$_.Country}},
+            @{Name='PostalCode'; Expression={$_.ZipCode}},
+            @{Name='OfficePhone'; Expression={$_.TelephoneNumber}},
+            @{Name='Department'; Expression={$Departments[(Get-Random -Maximum $Departments.Count)].Item('Name') | Get-Random -Count 1}},
+            @{Name='Title'; Expression={$Departments[(Get-Random -Maximum $Departments.Count)].Item('Positions') | Get-Random -Count 1}},
+            @{Name='EmployeeID'; Expression={"$($_.Country)-$((Get-Random -Minimum 0 -Maximum 99999).ToString('000000'))"}},
+            @{Name='BirthDate'; Expression={$_.Birthday}},
+            @{Name='Gender'; Expression={"$($_.Gender.SubString(0,1).ToUpper())$($_.Gender.Substring(1).ToLower())"}},
+            @{Name='Enabled'; Expression={$True}},
+            @{Name='AccountPassword'; Expression={ (ConvertTo-SecureString -String (Generate-Password -Prefix 'P@5z') -AsPlainText -Force)}},
+            @{Name='PasswordNeverExpires'; Expression={$True}}
+
+    foreach ($Department In $Departments.Name) {
+        $CreateADGroup = @{
+            Name = $Department
+            SamAccountName  = $Department
+            GroupCategory   = 'Security'
+            GroupScope      = 'Global'
+            Path            = $GroupOU.DistinguishedName
+            Description     = "Security Group for all $Department users"
+            OtherAttributes = @{"Mail"="$($Department.Replace(' ',''))@$($Forest)"}
+            Verbose         = $true
+        }
+        New-ADGroup @CreateADGroup | Out-Null
+    }
+
+    foreach ($User In $Users) {
+
+        if (!(Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.Country)`"" -SearchBase $UserOU.DistinguishedName -ErrorAction SilentlyContinue)) {
+            $CountryOU = New-ADOrganizationalUnit -Name $User.Country -Path $UserOU.DistinguishedName -Country $User.Country -Verbose -PassThru
+        } else {
+            $CountryOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.Country)`""
+        }
+
+        if (!(Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.State)`"" -SearchBase $CountryOU.DistinguishedName -ErrorAction SilentlyContinue)) {
+            $StateOU = New-ADOrganizationalUnit -Name $User.State -Path $CountryOU.DistinguishedName -State $User.State -Country $User.Country -Verbose -PassThru
+        } else {
+            $StateOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.State)`""
+        }
+
+        $DestinationOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.State)`"" -SearchBase $CountryOU.DistinguishedName
+        $CreateADUser = $User | Select-Object -Property @{Name='Path'; Expression={$DestinationOU.DistinguishedName}}, * | New-ADUser -Verbose -PassThru
+        $AddADUserToGroup = Add-ADGroupMember -Identity $User.Department -Members $User.SamAccountName -Verbose
+    }
+
+    foreach ($Department In $Departments.Name) {
+        $DepartmentManager = Get-ADUser -Filter {(Title -eq 'Manager') -and (Department -eq $Department)} | Sort-Object | Select-Object -First 1
+        $SetDepartmentManager = Get-ADUser -Filter {(Department -eq $Department)} | Set-ADUser -Manager $DepartmentManager -Verbose
+    }
+
+}
+#endregion

@@ -95,7 +95,7 @@
 
     "IISName": "IIS",
     "IISVmSize": "Standard_D2_v2",
-    "IISOsImage": "2008-R2-SP1",
+    "IISOsImage": "2012-R2-Datacenter",
     "IISNicName": "[concat(variables('IISName'), '-NIC')]",
     "IISStaticIP": "10.0.0.6",
 
@@ -119,8 +119,9 @@
     "DomainName": "sandbox.local",
     "DscUrl": "[uri(deployment().properties.templateLink.uri, 'DSC/DSC.zip')]",
     "DscExtensionUpdateTagVersion": "[guid('random', uniqueString(deployment().name))]",
-    "LinuxCommandToExecute": "./runlibssh.sh",
+    "LinuxCommandToExecute": "runlibssh.sh",
     "LinuxScriptUri": "[uri(deployment().properties.templateLink.uri, 'scripts/runlibssh.sh')]",
+    "DomainUsersData": "[uri(deployment().properties.templateLink.uri, 'scripts/ADUsers.csv')]",
     "deploymentUrl-VNET": "[uri(deployment().properties.templateLink.uri, 'nestedtemplates/vnet-with-dns-server.json')]"
   },
   "resources": [{
@@ -382,13 +383,14 @@
             "wmfVersion": "latest",
             "configurationFunction": "DSC.ps1\\ADDS",
             "modulesUrl": "[variables('DscUrl')]",
-            "Properties": {
+            "properties": {
               "DomainName": "[variables('DomainName')]",
               "UserCredential": {
                 "UserName": "[variables('VmAdminUserName')]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
-              "Flag9Value": "[parameters('Flag9Value')]"
+              "Flag9Value": "[parameters('Flag9Value')]",
+              "ADUsersUri": "[variables('DomainUsersData')]"
             }
           },
           "protectedSettings": {
@@ -493,7 +495,7 @@
             "wmfVersion": "latest",
             "configurationFunction": "DSC.ps1\\JumpBox",
             "modulesUrl": "[variables('DscUrl')]",
-            "Properties": {
+            "properties": {
               "DomainName": "[variables('DomainName')]",
               "ComputerName": "[variables('JumpBoxName')]",
               "UserCredential": {
@@ -571,7 +573,7 @@
             "wmfVersion": "latest",
             "configurationFunction": "DSC.ps1\\IIS",
             "modulesUrl": "[variables('DscUrl')]",
-            "Properties": {
+            "properties": {
               "DomainName": "[variables('DomainName')]",
               "ComputerName": "[variables('IISName')]",
               "UserCredential": {
@@ -653,7 +655,7 @@
             "wmfVersion": "latest",
             "configurationFunction": "DSC.ps1\\SQL",
             "modulesUrl": "[variables('DscUrl')]",
-            "Properties": {
+            "properties": {
               "DomainName": "[variables('DomainName')]",
               "ComputerName": "[variables('SQLName')]",
               "UserCredential": {
@@ -736,13 +738,14 @@
             "wmfVersion": "latest",
             "configurationFunction": "DSC.ps1\\FS",
             "modulesUrl": "[variables('DscUrl')]",
-            "Properties": {
+            "properties": {
               "DomainName": "[variables('DomainName')]",
               "ComputerName": "[variables('FSName')]",
               "UserCredential": {
                 "UserName": "[variables('VmAdminUserName')]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
+              "Flag3Value": "[parameters('Flag3Value')]",
               "Flag4Value": "[parameters('Flag4Value')]"
             }
           },
@@ -808,7 +811,7 @@
           "autoUpgradeMinorVersion": true,
           "settings": {
             "fileUris": "[split(variables('LinuxScriptUri'), ' ')]",
-            "commandToExecute": "[variables('LinuxCommandToExecute')]"
+            "commandToExecute": "[concat('sudo sh ', variables('LinuxCommandToExecute'), ' ', parameters('Flag6Value'))]"
           }
         }
       }]
