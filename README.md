@@ -1,3 +1,5 @@
+![Gladiator](https://natgeo.imgix.net/factsheets/thumbnails/GladiatorSchool.jpg?auto=compress,format&w=1024&h=560&fit=crop)
+(source: https://www.nationalgeographic.com.au/history/gladiator-school-discovery-reveals-hard-lives-of-ancient-warriors.aspx)
 # LudusMagnus
 > _“Force has no place where there is need of skill.”_ – Herodotus 
 
