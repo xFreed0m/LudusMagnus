@@ -69,18 +69,18 @@ Configuration ADDS {
             }
         } )
 
+        Write-Verbose 'Creating configuration for CreateUsersCsv' -Verbose
+        xRemoteFile CreateADUsersCsv {
+            Uri             = $ADUsersUri
+            DestinationPath = 'C:\Windows\Temp\ADUsers.csv'
+        }
+
         Write-Verbose 'Creating configuration for DnsServerAddress' -Verbose
         DnsServerAddress DnsServerAddress {
             Address        = '127.0.0.1'
             InterfaceAlias = $interfaceAlias
             AddressFamily  = 'IPv4'
-            DependsOn      = "[WindowsFeature]DNS"
-        }
-
-        Write-Verbose 'Creating configuration for CreateUsersCsv' -Verbose
-        xRemoteFile CreateADUsersCsv {
-            Uri             = $ADUsersUri
-            DestinationPath = 'C:\Windows\Temp\ADUsers.csv'
+            DependsOn      = '[WindowsFeature]DNS', '[xRemoteFile]CreateADUsersCsv'
         }
 
         Write-Verbose 'Creating configuration for CreateForest' -Verbose
@@ -88,9 +88,9 @@ Configuration ADDS {
             DomainName                    = $DomainName
             DomainAdministratorCredential = $DomainCreds
             SafemodeAdministratorPassword = $DomainCreds
-            DatabasePath                  = "F:\ADDS\NTDS"
-            LogPath                       = "F:\ADDS\NTDS"
-            SysvolPath                    = "F:\ADDS\Sysvol"
+            DatabasePath                  = 'F:\ADDS\NTDS'
+            LogPath                       = 'F:\ADDS\NTDS'
+            SysvolPath                    = 'F:\ADDS\Sysvol'
             DependsOn                     = '[WindowsFeature]AD-Domain-Services', '[Disk]ADDataDisk', '[xRemoteFile]CreateADUsersCsv'
         }
 
