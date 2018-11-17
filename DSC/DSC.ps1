@@ -56,10 +56,17 @@ Configuration ADDS {
             }
         } )
 
+        Write-Verbose 'Creating configuration for ADDSFolder' -Verbose
+        File ADDSFolder {
+            Ensure = 'Present'
+            Type = 'Directory'
+            DestinationPath = 'C:\ADDS'
+        }
+
         Write-Verbose 'Creating configuration for CreateUsersCsv' -Verbose
         xRemoteFile CreateADUsersCsv {
             Uri             = $ADUsersUri
-            DestinationPath = 'C:\Windows\Temp\ADUsers.csv'
+            DestinationPath = 'C:\ADDS\ADUsers.csv'
         }
 
         Write-Verbose 'Creating configuration for DnsServerAddress' -Verbose
@@ -70,12 +77,6 @@ Configuration ADDS {
             DependsOn      = '[WindowsFeature]DNS', '[xRemoteFile]CreateADUsersCsv'
         }
 
-        File NTDSFolder {
-            Ensure = 'Present'
-            Type = 'Directory'
-            DestinationPath = 'C:\ADDS'
-        }
-
         Write-Verbose 'Creating configuration for CreateForest' -Verbose
         xADDomain CreateForest {
             DomainName                    = $DomainName
@@ -84,25 +85,25 @@ Configuration ADDS {
             DatabasePath                  = 'C:\ADDS\NTDS'
             LogPath                       = 'C:\ADDS\NTDS'
             SysvolPath                    = 'C:\ADDS\Sysvol'
-            ForestMode = 'Win2008R2'
-            DomainMode = 'Win2008R2'
-            DependsOn                     = '[WindowsFeature]AD-Domain-Services', '[xRemoteFile]CreateADUsersCsv', '[File]NTDSFolder'
+            ForestMode                    = 'Win2008R2'
+            DomainMode                    = 'Win2008R2'
+            DependsOn                     = '[WindowsFeature]AD-Domain-Services', '[xRemoteFile]CreateADUsersCsv', '[File]ADDSFolder'
         }
 
         Write-Verbose 'Creating configuration for CreateUsers' -Verbose
         script CreateADUsers {
 
             TestScript = {
-                Test-Path -Path 'C:\Windows\Temp\ADUsers.flag'
+                Test-Path -Path 'C:\ADDS\ADUsers.flag'
             }
 
             GetScript = {
-                @{Result = (Get-Content -Path 'C:\Windows\Temp\ADUsers.flag' -Value (Get-Date))}
+                @{Result = (Get-Content -Path 'C:\ADDS\ADUsers.flag')}
             }
 
             SetScript = {
+                Set-Content -Path 'C:\ADDS\ADUsers.flag' -Value (Get-Date -Format yyyy-MM-dd-HH-mm-ss-ff)
                 Import-LudusMagnusADUsers -CsvPath 'C:\Windows\Temp\ADUsers.csv'
-                Set-Content -Path 'C:\Windows\Temp\ADUsers.flag' -Value (Get-Date)
             }
             DependsOn = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
         }
@@ -132,6 +133,9 @@ Configuration JumpBox {
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ($LocalAdmin), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
+
+    $DomainCreds | Export-Clixml -Path C:\Windows\Temp\dcreds.xml
+    $NewLocalCreds | Export-Clixml -Path C:\Windows\Temp\lcreds.xml
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
 		$_.InvokeMethod('ReleaseDHCPLease', $null)
@@ -528,9 +532,9 @@ Configuration FS {
 
         Write-Verbose 'Creating configuration for Flag 4' -Verbose
         Script Flag4Stream {
-            TestScript = { (Get-Content -Path "$($SharePath)\ADS.md" -Stream DATA) -eq $using:Flag4Value }
-            GetScript = { @{ Result = (Get-Content -Path "$($SharePath)\ADS.md" -Stream DATA) } }
-            SetScript = { Set-Content -Path "$($SharePath)\ADS.md" -Value $using:Flag4Value -Stream DATA }
+            TestScript = { (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA) -eq $using:Flag4Value }
+            GetScript = { @{ Result = (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA) } }
+            SetScript = { Set-Content -Path "$($using:SharePath)\ADS.md" -Value $using:Flag4Value -Stream DATA }
             DependsOn = '[File]Flag4'
         }
 
