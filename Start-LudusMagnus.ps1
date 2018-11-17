@@ -32,7 +32,7 @@ Write-Host @"
               '--'               . 
   Creating the arena might take some time...
   prepare your weapons until the arena master will call your name
-  (AKA the web app will pop open...)
+  (AKA get some coffee and wait for the web app to pop open...)
   @martin77s & @x_Freed0m
 "@
 
