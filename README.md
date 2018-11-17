@@ -42,6 +42,19 @@ And simply run the Start-LudusMagnus.ps1 script:
 ./Start-LudusMagnus.ps1
 ```
 
+By default, the resource group will be named 'LudusMagnus-yyyyMMddHHmm' and the resources will be deployed in the West-Europe datacenters.
+You can choose to change the resource group name and the location, by providing the relevant parameters and values:
+
+```powershell
+./Start-LudusMagnus.ps1 -ResourceGroupName myResourceGroup -Location eastus
+```
+
+For the complete list of Azure datacenter locations, run the following command:
+
+```powershell
+Get-AzLocation | Sort-Object -Property DisplayName | Select-Object -Property DisplayName, Location
+```
+
 ## Updating the Sandbox environment
 
 If you'd like to contribute and/or improve the automation project and environment, you'll need to have a machine ready with several tools
