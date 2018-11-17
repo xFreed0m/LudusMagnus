@@ -85,7 +85,7 @@
 
     "ADDSName": "ADDS",
     "ADDSVmSize": "Standard_DS3_v2",
-    "ADDSOsImage": "2016-Datacenter",
+    "ADDSOsImage": "2012-R2-Datacenter",
     "ADDSNicName": "[concat(variables('ADDSName'), '-NIC')]",
     "ADDSStaticIP": "10.0.0.4",
 
@@ -97,7 +97,7 @@
 
     "IISName": "IIS",
     "IISVmSize": "Standard_DS3_v2",
-    "IISOsImage": "2012-R2-Datacenter",
+    "IISOsImage": "2016-Datacenter",
     "IISNicName": "[concat(variables('IISName'), '-NIC')]",
     "IISStaticIP": "10.0.0.6",
 
@@ -379,7 +379,7 @@
         "properties": {
           "publisher": "Microsoft.Powershell",
           "type": "DSC",
-          "typeHandlerVersion": "2.9",
+          "typeHandlerVersion": "2.76",
           "autoUpgradeMinorVersion": true,
           "forceUpdateTag": "[variables('DscExtensionUpdateTagVersion')]",
           "settings": {
@@ -491,7 +491,7 @@
         "properties": {
           "publisher": "Microsoft.Powershell",
           "type": "DSC",
-          "typeHandlerVersion": "2.9",
+          "typeHandlerVersion": "2.76",
           "autoUpgradeMinorVersion": true,
           "forceUpdateTag": "[variables('DscExtensionUpdateTagVersion')]",
           "settings": {
@@ -570,7 +570,7 @@
         "properties": {
           "publisher": "Microsoft.Powershell",
           "type": "DSC",
-          "typeHandlerVersion": "2.9",
+          "typeHandlerVersion": "2.76",
           "autoUpgradeMinorVersion": true,
           "forceUpdateTag": "[variables('DscExtensionUpdateTagVersion')]",
           "settings": {
@@ -648,7 +648,7 @@
         "properties": {
           "publisher": "Microsoft.Powershell",
           "type": "DSC",
-          "typeHandlerVersion": "2.9",
+          "typeHandlerVersion": "2.76",
           "autoUpgradeMinorVersion": true,
           "forceUpdateTag": "[variables('DscExtensionUpdateTagVersion')]",
           "settings": {
@@ -731,7 +731,7 @@
         "properties": {
           "publisher": "Microsoft.Powershell",
           "type": "DSC",
-          "typeHandlerVersion": "2.9",
+          "typeHandlerVersion": "2.76",
           "autoUpgradeMinorVersion": true,
           "forceUpdateTag": "[variables('DscExtensionUpdateTagVersion')]",
           "settings": {
