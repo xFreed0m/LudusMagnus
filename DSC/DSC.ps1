@@ -640,9 +640,11 @@ function Import-LudusMagnusADUsers {
         }
 
         $DestinationOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.State)`"" -SearchBase $CountryOU.DistinguishedName
-        $User | Select-Object -Property @{Name='Path'; Expression={$DestinationOU.DistinguishedName}}, * |
-            New-ADUser -ErrorAction SilentlyContinue -Verbose | Out-Null
-        Add-ADGroupMember -Identity $User.Department -Members $User.SamAccountName -ErrorAction SilentlyContinue -Verbose | Out-Null
+        $userObject = $User | Select-Object -Property @{Name='Path'; Expression={$DestinationOU.DistinguishedName}}, * |
+            New-ADUser -ErrorAction SilentlyContinue -Verbose -PassThru
+        if($userObject) {
+            Add-ADGroupMember -Identity $userObject.Department -Members $userObject.SamAccountName -ErrorAction SilentlyContinue -Verbose | Out-Null
+        }
     }
 
     Write-Verbose 'Setting department managers' -Verbose
