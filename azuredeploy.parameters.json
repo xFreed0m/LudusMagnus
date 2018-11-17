@@ -4,7 +4,6 @@
   "parameters": {
     "ClientAllowedIP": { "value": "0.0.0.0/32" },
     "VmAdminPassword": { "value": "P@55w0rd!" },
-    "DomainPassword": { "value": "P455w0rd1@#" },
     "Flag0Value": { "value": "3.14159265358979" },
     "Flag1Value": { "value": "19551105" },
     "Flag2Value": { "value": "42" },

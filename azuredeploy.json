@@ -12,14 +12,7 @@
     "VmAdminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "The local VM Administrator password"
-      },
-      "defaultValue": "P@55w0rd!"
-    },
-    "DomainPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The Domain Administrator password"
+        "description": "The Jumpbox local Administrator password"
       },
       "defaultValue": "P@55w0rd!"
     },
@@ -80,6 +73,8 @@
     "OSDiskName": "OSDisk",
     "DataDiskName": "DataDisk",
     "VmAdminUserName": "sadmind",
+    "JumpBoxAdmin": "jumpadmin",
+    "DomainPassword": "[concat('P@5z~oRD|', guid('random', uniqueString(deployment().name)))]",
 
     "ADDSName": "ADDS",
     "ADDSVmSize": "Standard_D2_v2",
@@ -118,7 +113,6 @@
 
     "DomainName": "sandbox.local",
     "DscUrl": "[uri(deployment().properties.templateLink.uri, 'DSC/DSC.zip')]",
-    "DscExtensionUpdateTagVersion": "[guid('random', uniqueString(deployment().name))]",
     "LinuxCommandToExecute": "runlibssh.sh",
     "LinuxScriptUri": "[uri(deployment().properties.templateLink.uri, 'scripts/runlibssh.sh')]",
     "DomainUsersData": "[uri(deployment().properties.templateLink.uri, 'scripts/ADUsers.csv')]",
@@ -151,23 +145,42 @@
       "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [{
-          "name": "RDP",
-          "properties": {
-            "provisioningState": "Succeeded",
-            "protocol": "Tcp",
-            "sourcePortRange": "*",
-            "destinationPortRange": "3389",
-            "sourceAddressPrefix": "[parameters('ClientAllowedIP')]",
-            "destinationAddressPrefix": "*",
-            "access": "Allow",
-            "priority": 300,
-            "direction": "Inbound",
-            "sourcePortRanges": [],
-            "destinationPortRanges": [],
-            "sourceAddressPrefixes": [],
-            "destinationAddressPrefixes": []
+            "name": "RDP",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "[parameters('ClientAllowedIP')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 300,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "SSH",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "[parameters('ClientAllowedIP')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 400,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
           }
-        }]
+        ]
       },
       "dependsOn": []
     },
@@ -395,7 +408,7 @@
           },
           "protectedSettings": {
             "Items": {
-              "DomainPassword": "[parameters('DomainPassword')]"
+              "DomainPassword": "[variables('DomainPassword')]"
             }
           }
         }
@@ -449,7 +462,7 @@
         },
         "osProfile": {
           "computerName": "[variables('JumpBoxName')]",
-          "adminUsername": "[variables('VmAdminUserName')]",
+          "adminUsername": "[variables('JumpBoxAdmin')]",
           "adminPassword": "[parameters('VmAdminPassword')]"
         },
         "licenseType": "Windows_Server",
@@ -507,7 +520,7 @@
           },
           "protectedSettings": {
             "Items": {
-              "DomainPassword": "[parameters('DomainPassword')]"
+              "DomainPassword": "[variables('DomainPassword')]"
             }
           }
         }
@@ -585,7 +598,7 @@
           },
           "protectedSettings": {
             "Items": {
-              "DomainPassword": "[parameters('DomainPassword')]"
+              "DomainPassword": "[variables('DomainPassword')]"
             }
           }
         }
@@ -668,7 +681,7 @@
           },
           "protectedSettings": {
             "Items": {
-              "DomainPassword": "[parameters('DomainPassword')]"
+              "DomainPassword": "[variables('DomainPassword')]"
             }
           }
         }
@@ -747,7 +760,7 @@
           },
           "protectedSettings": {
             "Items": {
-              "DomainPassword": "[parameters('DomainPassword')]"
+              "DomainPassword": "[variables('DomainPassword')]"
             }
           }
         }
@@ -818,9 +831,9 @@
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('deployment-publicIpName'))).IpAddress]"
     },
-    "DscExtensionUpdateTagVersion": {
+    "JumpBoxAdmin": {
       "type": "string",
-      "value": "[variables('DscExtensionUpdateTagVersion')]"
+      "value": "[variables('JumpBoxAdmin')]"
     }
   }
 }

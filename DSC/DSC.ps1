@@ -646,7 +646,8 @@ function Import-LudusMagnusADUsers {
         }
 
         $DestinationOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.State)`"" -SearchBase $CountryOU.DistinguishedName
-        $User | Select-Object -Property @{Name='Path'; Expression={$DestinationOU.DistinguishedName}}, * | New-ADUser -Verbose | Out-Null
+        $User | Select-Object -Property @{Name='Path'; Expression={$DestinationOU.DistinguishedName}}, * |
+            New-ADUser -ErrorAction SilentlyContinue -Verbose | Out-Null
         Add-ADGroupMember -Identity $User.Department -Members $User.SamAccountName -Verbose | Out-Null
     }
 

@@ -36,12 +36,15 @@ if (-not (Get-AzResourceGroup -Name $resourceGroupName -ErrorAction SilentlyCont
     New-AzResourceGroup -Name $resourceGroupName -Location $location
 }
 
-# Enable debugging messages
-#$DebugPreference = "Continue"
-
 # Start the deployment
 $deploymentResult = New-AzResourceGroupDeployment @deploymentParams
-$deploymentResult
 if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
-    ($deploymentResult.Outputs.Values)[0].Value
+    @'
+    To RDP the Jumpbox use the following details:
+    IPAddress: {0}
+    UserName: {1}
+    Password: {2}
+'@ -f ($deploymentResult.Outputs.Values)[0].Value, ($deploymentResult.Outputs.Values)[1].Value, $flags['VmAdminPassword']
+} else {
+    $deploymentResult
 }
