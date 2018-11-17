@@ -118,6 +118,7 @@ Configuration JumpBox {
         [string] $DomainName,
         [string] $ComputerName,
         [PSCredential] $UserCredential,
+        [string] $LocalAdmin,
         [string] $Flag0Value
     )
 
@@ -129,7 +130,7 @@ Configuration JumpBox {
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
     )
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ($UserCredential.UserName), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
+        ($LocalAdmin), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -171,7 +172,7 @@ Configuration JumpBox {
         Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
         User ChangeLocalAdminPassword {
             Ensure   = 'Present'
-            UserName = $UserCredential.UserName
+            UserName = $NewLocalCreds.UserName
             Password = $NewLocalCreds
         }
 
@@ -213,7 +214,7 @@ Configuration SQL {
     Import-DscResource -ModuleName ComputerManagementDsc
     Import-DscResource -ModuleName SqlServerDsc
 
-    $InstanceName = ''
+    $InstanceName = 'MSSQLSERVER'
     $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
     )
@@ -360,7 +361,7 @@ Configuration IIS {
         ($UserCredential.UserName), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
     $AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        'flag8', ("flag8:{$Flag8Value}" | ConvertTo-SecureString -AsPlainText -Force)
+        'flag8', ("F|_4@8:{$Flag8Value}" | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {

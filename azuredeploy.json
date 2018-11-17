@@ -65,7 +65,7 @@
     "LinuxImageOffer": "UbuntuServer",
     "SqlImagePublisher": "MicrosoftSQLServer",
     "SqlImageOffer": "SQL2014SP3-WS2012R2",
-    "SqlImageSku": "express",
+    "SqlImageSku": "standard",
     "SqlSaUser": "sa",
     "SqlSaPassword": "[parameters('VmAdminPassword')]",
 
@@ -110,7 +110,7 @@
     "LinuxNicName": "[concat(variables('LinuxName'), '-NIC')]",
     "LinuxStaticIP": "10.0.0.9",
 
-    "DomainName": "sandbox.local",
+    "DomainName": "LudusMagnus.local",
     "DscUrl": "[uri(deployment().properties.templateLink.uri, 'DSC/DSC.zip')]",
     "LinuxCommandToExecute": "runlibssh.sh",
     "LinuxScriptUri": "[uri(deployment().properties.templateLink.uri, 'scripts/runlibssh.sh')]",
@@ -504,6 +504,7 @@
                 "UserName": "[variables('VmAdminUserName')]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
+              "LocalAdmin": "[variables('JumpBoxAdmin')]",
               "Flag0Value": "[parameters('Flag0Value')]"
             }
           },
