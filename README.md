@@ -1,5 +1,6 @@
 ![Gladiator](https://natgeo.imgix.net/factsheets/thumbnails/GladiatorSchool.jpg?auto=compress,format&w=1024&h=560&fit=crop)
 (source: https://www.nationalgeographic.com.au/history/gladiator-school-discovery-reveals-hard-lives-of-ancient-warriors.aspx)
+## Contributing [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/dwyl/esta/issues) [![HitCount](http://hits.dwyl.io/martin77s/LudusMagnus.svg)](http://hits.dwyl.io/martin77s/LudusMagnus)
 
 # LudusMagnus
 
@@ -114,4 +115,4 @@ If you set up a different environemnt (more machines, etc.) you can calculate yo
 
 #
 
-> Created by Martin Schvartzman (@martin77s) and Roei Sherman (@x_Freedom)
+> Created by Martin Schvartzman (@martin77s) [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?label=Follow&style=social)](https://twitter.com/martin77s) and Roei Sherman (@x_Freedom) [![Twitter Follow](https://img.shields.io/twitter/follow/espadrine.svg?label=Follow&style=social)](https://twitter.com/x_Freed0m)
