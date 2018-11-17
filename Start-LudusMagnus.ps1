@@ -6,7 +6,9 @@
 Write-Host @"
 
 [+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+]
-[+]         Welcome to LudusMagnus!             [+]
+[+]                                             [+]
+[+]          Welcome to LudusMagnus!            [+]
+[+]                                             [+]
 [+]                                .-.          [+]
 [+]                               {{@}}         [+]
 [+]               <>               8@8          [+]
@@ -34,10 +36,13 @@ Write-Host @"
 [+]              '--'               .           [+]
 [+]                                             [+]
 [+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+]
-   Creating the arena might take some time...
-   prepare your weapons until the arena master will call your name
-   (AKA get some coffee and wait for the web app to pop open...)
-   @martin77s & @x_Freed0m
+
+      Creating the arena might take some time...
+      prepare your weapons until the arena master
+      will call your name.
+      AKA get a coffee until the webapp will pop open.
+      
+Brought to you by @martin77s & @x_Freed0m
 "@
 
 $tamplateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master'
