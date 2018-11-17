@@ -241,6 +241,13 @@ Configuration SQL {
             ActionAfterReboot    = 'ContinueConfiguration'
         }
 
+        Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
+        User ChangeLocalAdminPassword {
+            Ensure   = 'Present'
+            UserName = $UserCredential.UserName
+            Password = $NewLocalCreds
+        }
+
         Write-Verbose 'Creating configuration for the DatabaseEngineFirewallRule' -Verbose
         Firewall DatabaseEngineFirewallRule {
             Direction   = 'Inbound'
@@ -294,17 +301,18 @@ Configuration SQL {
             Name         = $DatabaseName
         }
 
+        Write-Verbose 'Creating configuration for the SqlBrowser' -Verbose
         Service SqlBrowser {
             Ensure      = 'Present'
             Name        = 'SQLBrowser'
             StartupType = "Automatic"
             State       = "Running"
-            Credential  = $SQLAuthCreds
+            Credential  = $NewLocalCreds
+            DependsOn   = '[User]ChangeLocalAdminPassword'
         }
 
         Write-Verbose 'Creating configuration for Flag 5' -Verbose
         SqlScriptQuery Flag5 {
-
             ServerInstance = ('{0}\{1}' -f $ComputerName, $InstanceName)
             QueryTimeout = 30
             DependsOn    = '[SqlDatabase]CreateDatabase'
@@ -315,14 +323,6 @@ Configuration SQL {
 "@
             GetQuery     = "SELECT TOP 1 [flag] FROM [$DatabaseName].[dbo].[CTF] FOR JSON AUTO"
             SetQuery     = "USE [$DatabaseName]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ('$Flag5Value');"
-
-        }
-
-        Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
-        User ChangeLocalAdminPassword {
-            Ensure   = 'Present'
-            UserName = $UserCredential.UserName
-            Password = $NewLocalCreds
         }
 
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose
@@ -533,8 +533,8 @@ Configuration FS {
 
         Write-Verbose 'Creating configuration for Flag 4' -Verbose
         Script Flag4Stream {
-            TestScript = { (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA) -eq $using:Flag4Value }
-            GetScript = { @{ Result = (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA) } }
+            TestScript = { (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA -ErrorAction SilentlyContinue) -eq $using:Flag4Value }
+            GetScript = { @{ Result = (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA -ErrorAction SilentlyContinue) } }
             SetScript = { Set-Content -Path "$($using:SharePath)\ADS.md" -Value $using:Flag4Value -Stream DATA }
             DependsOn = '[File]Flag4'
         }

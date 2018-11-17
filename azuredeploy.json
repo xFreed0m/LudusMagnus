@@ -343,7 +343,7 @@
         "osProfile": {
           "computerName": "[variables('ADDSName')]",
           "adminUsername": "[variables('VmAdminUserName')]",
-          "adminPassword": "[parameters('VmAdminPassword')]"
+          "adminPassword": "[variables('DomainPassword')]"
         },
         "licenseType": "Windows_Server",
         "storageProfile": {
