@@ -342,7 +342,7 @@ Configuration IIS {
     $DomainCreds.GetNetworkCredential().password | Out-File -FilePath C:\Windows\Temp\pass.txt
 
     $AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        'flag8', ("F|_4@8:{$Flag8Value}" | ConvertTo-SecureString -AsPlainText -Force)
+        'flag8', (('F|_4@8:{' + $Flag8Value + '}') | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
