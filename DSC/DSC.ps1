@@ -644,7 +644,7 @@ function Import-LudusMagnusADUsers {
         $userObject = $User | Select-Object -Property @{Name='Path'; Expression={$DestinationOU.DistinguishedName}}, * |
             New-ADUser -ErrorAction SilentlyContinue -Verbose -PassThru
         if($userObject) {
-            Add-ADGroupMember -Identity $userObject.Department -Members $userObject.SamAccountName -ErrorAction SilentlyContinue -Verbose | Out-Null
+            Add-ADGroupMember -Identity $User.Department -Members $userObject.SamAccountName -ErrorAction SilentlyContinue -Verbose | Out-Null
         }
     }
 
