@@ -213,7 +213,7 @@ Configuration SQL {
     Import-DscResource -ModuleName ComputerManagementDsc
     Import-DscResource -ModuleName SqlServerDsc
 
-    $InstanceName = '(local)'
+    $InstanceName = ''
     $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
     )
@@ -360,7 +360,7 @@ Configuration IIS {
         ($UserCredential.UserName), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
     $AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ('{0}\{1}' -f $ComputerName, 'flag8'), ("flag8:{$Flag8Value}" | ConvertTo-SecureString -AsPlainText -Force)
+        'flag8', ("flag8:{$Flag8Value}" | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -508,7 +508,7 @@ Configuration FS {
         }
 
         Write-Verbose 'Creating configuration for Flag 3' -Verbose
-        File Flag4 {
+        File Flag3 {
             Ensure          = 'Present'
             Type            = 'File'
             DestinationPath = "$($SharePath)\Salaries.csv"
