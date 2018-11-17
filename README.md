@@ -1,8 +1,9 @@
 ![Gladiator](https://natgeo.imgix.net/factsheets/thumbnails/GladiatorSchool.jpg?auto=compress,format&w=1024&h=560&fit=crop)
 (source: https://www.nationalgeographic.com.au/history/gladiator-school-discovery-reveals-hard-lives-of-ancient-warriors.aspx)
-# LudusMagnus
-> _“Force has no place where there is need of skill.”_ – Herodotus 
 
+# LudusMagnus
+
+> _“Force has no place where there is need of skill.”_ – Herodotus 
 
 LudusMagnus is an automation project for creating CTF (Capture-The-Flag) and Defend training environments.
 The main purpose of this tool, is to allow InfoSec professionals (both offensive and defensive) the ability to train for free.
@@ -93,7 +94,10 @@ Once you click the "I'm done" button, the flags you entered will be checked if t
 **Once again, make sure to tear-down the environment when you are done, or the costs will be billed to your Azure subscription!**
 
 ## Costs
+
 This code is open-source, therefore free for private use. The Azure Cloud costs for hosting the environment is based on the Azure pricing (which are subject to change based on Microsoft decision).
 While considering that, every new account that signs up for Azure subscriptions receives 200$ for free (Thank you Microsoft!) and currently (Nov 2018) the costs of running this environment for 24 hours is approx. 160$.
 
-> created by Martin Schvartzman (@martin77s) and Roei Sherman (@x_Freedom)
+#
+
+> Created by Martin Schvartzman (@martin77s) and Roei Sherman (@x_Freedom)
