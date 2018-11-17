@@ -43,7 +43,7 @@ Write-Host @"
       AKA get a coffee until the webapp will pop open.
 
 Brought to you by @martin77s & @x_Freed0m
-"@
+"@ -Foreground darkcyan -Background black
 
 $tamplateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master'
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
