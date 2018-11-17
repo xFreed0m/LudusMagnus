@@ -130,7 +130,7 @@ Configuration JumpBox {
     $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
     )
-    $DomainCreds | Export-Clixml -Path C:\Windows\Temp\dcreds.xml
+    $DomainCreds.GetNetworkCredential().password | Out-File -Path C:\Windows\Temp\pass.txt
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
 		$_.InvokeMethod('ReleaseDHCPLease', $null)
@@ -349,6 +349,8 @@ Configuration IIS {
     $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
     )
+    $DomainCreds.GetNetworkCredential().password | Out-File -Path C:\Windows\Temp\pass.txt
+    
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ($UserCredential.UserName), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )

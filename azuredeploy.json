@@ -810,7 +810,7 @@
           "autoUpgradeMinorVersion": true,
           "settings": {
             "fileUris": "[split(variables('LinuxScriptUri'), ' ')]",
-            "commandToExecute": "[concat('sudo sh ', variables('LinuxCommandToExecute'), ' ', parameters('Flag6Value'))]"
+            "commandToExecute": "[concat('sudo sh ', variables('LinuxCommandToExecute'), ' \"flag6:{', parameters('Flag6Value'), '}\"')]"
           }
         }
       }]
