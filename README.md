@@ -110,6 +110,7 @@ Once you click the "I'm done" button, the flags you entered will be checked if t
 
 This code is open-source, therefore free for private use. The Azure Cloud costs for hosting the environment is based on the Azure pricing (which are subject to change based on Microsoft decision).
 While considering that, every new account that signs up for Azure subscriptions receives 200$ for free (Thank you Microsoft!) and currently (Nov 2018) the costs of running this environment for 24 hours is approx. 160$.
+If you set up a different environemnt (more machines, etc.) you can calculate your estimated costs here: [Azure Cost Calc](https://azure.microsoft.com/en-us/pricing/calculator/)
 
 #
 
