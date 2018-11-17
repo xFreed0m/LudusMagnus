@@ -27,7 +27,7 @@ You need to have:
 
 **Note: Please remember to tear-down the sandbox environment when done, since your Azure subscription is billed for the costs!**
 
-Then, login to your Azure account and select your subscription:
+Then, open PowerShell (pwsh.exe), login to your Azure account and select your subscription:
 
 ```powershell
 Login-AzAccount
