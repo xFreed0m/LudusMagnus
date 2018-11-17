@@ -505,7 +505,6 @@
                 "UserName": "[variables('VmAdminUserName')]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
-              "LocalAdmin": "[variables('JumpBoxAdmin')]",
               "Flag0Value": "[parameters('Flag0Value')]"
             }
           },

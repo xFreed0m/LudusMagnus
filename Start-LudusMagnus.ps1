@@ -17,8 +17,8 @@ $deploymentParams = @{
 }
 
 # Add the flags values as deployment parameters
-$rand = Get-Random -Minimum 0 -Maximum 9; $rand = ''
-$flags = ((Invoke-WebRequest -Uri (($tamplateBaseUrl + '/azuredeploy.parameters{0}.json') -f $rand)).Content | ConvertFrom-Json).parameters
+$templateParametersUri = ($tamplateBaseUrl + '/azuredeploy.parameters/azuredeploy.parameters{0}.json') -f (Get-Random -Minimum 0 -Maximum 99)
+$flags = ((Invoke-WebRequest -Uri ($templateParametersUri)).Content | ConvertFrom-Json).parameters
 $flags | Select-Object -Property Flag*Value | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name | ForEach-Object {
     $deploymentParams.Add($_, ($flags | Select-Object -ExpandProperty $_).Value)
 }
@@ -42,6 +42,12 @@ if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
     UserName: {1}
     Password: {2}
 '@ -f ($deploymentResult.Outputs.Values)[0].Value, ($deploymentResult.Outputs.Values)[1].Value, $flags['VmAdminPassword']
+
+    # Todo: Open the default browser on the WebApp's scoring page (with the deployment return values as paramters)
+    $encodedParams = [System.Net.WebUtility]::UrlEncode(
+        '{0} _ {1} _ {2}' -f ($deploymentResult.Outputs.Values)[0].Value, ($deploymentResult.Outputs.Values)[1].Value, $flags['VmAdminPassword']
+    )
+    Start-Process ('http://google.com?q={0}' -f $encodedParams)
 }
 else {
     $deploymentResult
