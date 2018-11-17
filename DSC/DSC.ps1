@@ -17,6 +17,7 @@ Configuration ADDS {
     Import-DscResource -ModuleName NetworkingDsc
     Import-DscResource -ModuleName xPSDesiredStateConfiguration
 
+    Publish-LudusMagnusModule
     $interfaceAlias = Get-NetAdapter | Where-Object { $_.Name -Like 'Ethernet*' } | Select-Object -First 1 -ExpandProperty Name
     $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), ($UserCredential.Password)
@@ -106,7 +107,7 @@ Configuration ADDS {
             }
 
             SetScript = {
-                Create-ADUsers -CsvPath 'C:\Windows\Temp\ADUsers.csv'
+                Import-LudusMagnusADUsers -CsvPath 'C:\Windows\Temp\ADUsers.csv'
                 Set-Content -Path 'C:\Windows\Temp\ADUsers.flag' -Value (Get-Date)
             }
             DependsOn = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
@@ -134,7 +135,7 @@ Configuration JumpBox {
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
     )
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ($UserCredential.UserName), (Generate-Password | ConvertTo-SecureString -AsPlainText -Force)
+        ($UserCredential.UserName), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -223,7 +224,7 @@ Configuration SQL {
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
     )
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ($UserCredential.UserName), (Generate-Password | ConvertTo-SecureString -AsPlainText -Force)
+        ($UserCredential.UserName), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -350,7 +351,7 @@ Configuration IIS {
         [string] $DomainName,
         [string] $ComputerName,
         [PSCredential] $UserCredential,
-        [PSCredential] $Flag8Value
+        [string] $Flag8Value
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
@@ -362,7 +363,10 @@ Configuration IIS {
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
     )
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ($UserCredential.UserName), (Generate-Password | ConvertTo-SecureString -AsPlainText -Force)
+        ($UserCredential.UserName), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
+    )
+    $AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
+        ('{0}\{1}' -f $ComputerName, 'flag8'), ("flag8:{$Flag8Value}" | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -395,12 +399,27 @@ Configuration IIS {
 			DependsOn       = "[WindowsFeatureSet]Web-Server"
 		}
 
-        Write-Verbose 'Creating configuration for Flag 8' -Verbose
+        Write-Verbose 'Creating configuration for AppPoolIdentity' -Verbose
+        User AppPoolIdentity {
+            Ensure   = 'Present'
+            UserName = $AppPoolIdentity.UserName
+            Password = $AppPoolIdentity
+        }
+
+        Write-Verbose 'Assigning configuration for AppPoolIdentity Permissions' -Verbose
+        Group AppPoolIdentityPermissions {
+            Ensure           = 'Present'
+            GroupName        = 'Administrators'
+            MembersToInclude = @($UserCredential.UserName, $AppPoolIdentity.UserName)
+            DependsOn        = '[User]AppPoolIdentity'
+        }
+
+        Write-Verbose 'Creating configuration for ApplicationPool' -Verbose
         xWebAppPool Flag8 {
             Ensure     = 'Present'
             Name       = 'AppPool'
-            Credential = $Flag8Value
-            DependsOn  = '[WindowsFeatureSet]Web-Server'
+            Credential = $AppPoolIdentity
+            DependsOn  = '[WindowsFeatureSet]Web-Server', '[User]AppPoolIdentity', '[Group]AppPoolIdentityPermissions'
         }
 
         Write-Verbose 'Creating configuration for the Default Web Site' -Verbose
@@ -432,7 +451,7 @@ Configuration IIS {
             Name       = $ComputerName
             DomainName = $DomainName
             Credential = $DomainCreds
-            DependsOn  = '[xWaitForADDomain]WaitForDomain'
+            DependsOn  = '[xWaitForADDomain]WaitForDomain', '[xWebAppPool]Flag8'
         }
     }
 }
@@ -460,7 +479,7 @@ Configuration FS {
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
     )
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ($UserCredential.UserName), (Generate-Password | ConvertTo-SecureString -AsPlainText -Force)
+        ($UserCredential.UserName), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -545,16 +564,10 @@ Configuration FS {
 }
 #endregion
 
+
+
 #region Helper functions
-function Generate-Password {
-    param([string]$Prefix = '', $Length = 24)
-    $Suffix = ([char[]]([char]33..[char]95) + ([char[]]([char]97..[char]126)) + 0..9 |
-        Sort-Object {Get-Random})[0..$Length] -join ''
-    ($Prefix + $Suffix).Substring(0,$Length)
-}
-
-
-function Create-ADUsers {
+function Import-LudusMagnusADUsers {
     param(
         $CsvPath = 'C:\Windows\Temp\ADUsers.csv'
     )
@@ -562,13 +575,16 @@ function Create-ADUsers {
     $Domain   = Get-ADDomain
     $DomainDN = $Domain.DistinguishedName
     $Forest   = $Domain.Forest
+
+    Write-Verbose 'Creating containers' -Verbose
     $ParentOU = New-ADOrganizationalUnit -Name 'Accounts' -Path $DomainDN -Verbose -ErrorAction Stop -PassThru
     $UserOU   = New-ADOrganizationalUnit -Name 'Users' -Path $ParentOU.DistinguishedName -Verbose -PassThru -ErrorAction Stop
     $GroupOU  = New-ADOrganizationalUnit -Name 'Groups' -Path $ParentOU.DistinguishedName -Verbose -PassThru -ErrorAction Stop
-    $Content  = Import-CSV -Path $CsvPath -ErrorAction Stop | Sort-Object -Property State
 
+    Write-Verbose 'Initializing password policy' -Verbose
     Set-ADDefaultDomainPasswordPolicy $Forest -ComplexityEnabled $False -MaxPasswordAge '1000' -PasswordHistoryCount 0 -MinPasswordAge 0
 
+    Write-Verbose 'Initializing departments' -Verbose
     $Departments =  (
         @{'Name' = 'Accounting'; Positions = ('Manager', 'Accountant', 'Data Entry')},
         @{'Name' = 'Human Resources'; Positions = ('Manager', 'Administrator', 'Officer', 'Coordinator')},
@@ -582,29 +598,26 @@ function Create-ADUsers {
         @{'Name' = 'Purchasing'; Positions = ('Manager', 'Coordinator', 'Clerk', 'Purchaser', 'Senior Vice President')}
     )
 
+    Write-Verbose 'Initializing user details' -Verbose
+    $Content  = Import-CSV -Path $CsvPath -ErrorAction Stop | Sort-Object -Property State
     $Users = $Content |
         Select-Object  @{Name='Name';Expression={"$($_.GivenName) $($_.Surname)"}},
             @{Name='SamAccountName'; Expression={"$($_.GivenName)$($_.Surname.Substring(0,3))"}},
             @{Name='UserPrincipalName'; Expression={"$($_.GivenName)$($_.Surname.Substring(0,3))@$($Forest)"}},
             @{Name='EmailAddress'; Expression={"$($_.GivenName)$($_.Surname.Substring(0,3))@$($Forest)"}},
-            @{Name='GivenName'; Expression={$_.GivenName}},
-            @{Name='Surname'; Expression={$_.Surname}},`
             @{Name='DisplayName'; Expression={"$($_.GivenName) $($_.MiddleInitial). $($_.Surname)"}},
-            @{Name='City'; Expression={$_.City}},
-            @{Name='StreetAddress'; Expression={$_.StreetAddress}},
-            @{Name='State'; Expression={$_.State}},
-            @{Name='Country'; Expression={$_.Country}},
-            @{Name='PostalCode'; Expression={$_.ZipCode}},
-            @{Name='OfficePhone'; Expression={$_.TelephoneNumber}},
             @{Name='Department'; Expression={$Departments[(Get-Random -Maximum $Departments.Count)].Item('Name') | Get-Random -Count 1}},
             @{Name='Title'; Expression={$Departments[(Get-Random -Maximum $Departments.Count)].Item('Positions') | Get-Random -Count 1}},
             @{Name='EmployeeID'; Expression={"$($_.Country)-$((Get-Random -Minimum 0 -Maximum 99999).ToString('000000'))"}},
-            @{Name='BirthDate'; Expression={$_.Birthday}},
             @{Name='Gender'; Expression={"$($_.Gender.SubString(0,1).ToUpper())$($_.Gender.Substring(1).ToLower())"}},
             @{Name='Enabled'; Expression={$True}},
-            @{Name='AccountPassword'; Expression={ (ConvertTo-SecureString -String (Generate-Password -Prefix 'P@5z') -AsPlainText -Force)}},
-            @{Name='PasswordNeverExpires'; Expression={$True}}
+            @{Name='PostalCode'; Expression={$_.ZipCode}},
+            @{Name='OfficePhone'; Expression={$_.TelephoneNumber}},
+            @{Name='PasswordNeverExpires'; Expression={$True}},
+            @{Name='AccountPassword'; Expression={ (ConvertTo-SecureString -String (Initialize-LudusMagnusPassword -Prefix 'P@5z') -AsPlainText -Force)}},
+            GivenName, Surname, City, StreetAddress, State, Country, BirthDate
 
+    Write-Verbose 'Creating groups' -Verbose
     foreach ($Department In $Departments.Name) {
         $CreateADGroup = @{
             Name = $Department
@@ -619,29 +632,55 @@ function Create-ADUsers {
         New-ADGroup @CreateADGroup | Out-Null
     }
 
+    Write-Verbose 'Creating Organizational Units and Users' -Verbose
     foreach ($User In $Users) {
 
         if (!(Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.Country)`"" -SearchBase $UserOU.DistinguishedName -ErrorAction SilentlyContinue)) {
             $CountryOU = New-ADOrganizationalUnit -Name $User.Country -Path $UserOU.DistinguishedName -Country $User.Country -Verbose -PassThru
         } else {
-            $CountryOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.Country)`""
+            $CountryOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.Country)`"" -SearchBase $UserOU.DistinguishedName
         }
 
         if (!(Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.State)`"" -SearchBase $CountryOU.DistinguishedName -ErrorAction SilentlyContinue)) {
-            $StateOU = New-ADOrganizationalUnit -Name $User.State -Path $CountryOU.DistinguishedName -State $User.State -Country $User.Country -Verbose -PassThru
-        } else {
-            $StateOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.State)`""
+            New-ADOrganizationalUnit -Name $User.State -Path $CountryOU.DistinguishedName -State $User.State -Country $User.Country -Verbose | Out-Null
         }
 
         $DestinationOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.State)`"" -SearchBase $CountryOU.DistinguishedName
-        $CreateADUser = $User | Select-Object -Property @{Name='Path'; Expression={$DestinationOU.DistinguishedName}}, * | New-ADUser -Verbose -PassThru
-        $AddADUserToGroup = Add-ADGroupMember -Identity $User.Department -Members $User.SamAccountName -Verbose
+        $User | Select-Object -Property @{Name='Path'; Expression={$DestinationOU.DistinguishedName}}, * | New-ADUser -Verbose | Out-Null
+        Add-ADGroupMember -Identity $User.Department -Members $User.SamAccountName -Verbose | Out-Null
     }
 
+    Write-Verbose 'Setting department managers' -Verbose
     foreach ($Department In $Departments.Name) {
         $DepartmentManager = Get-ADUser -Filter {(Title -eq 'Manager') -and (Department -eq $Department)} | Sort-Object | Select-Object -First 1
-        $SetDepartmentManager = Get-ADUser -Filter {(Department -eq $Department)} | Set-ADUser -Manager $DepartmentManager -Verbose
+        Get-ADUser -Filter {(Department -eq $Department)} | Set-ADUser -Manager $DepartmentManager -Verbose | Out-Null
     }
 
 }
+
+function Initialize-LudusMagnusPassword {
+    param([string]$Prefix = '', $Length = 24)
+    $Suffix = ([char[]]([char]33..[char]95) + ([char[]]([char]97..[char]126)) + 0..9 |
+        Sort-Object {Get-Random})[0..$Length] -join ''
+    ($Prefix + $Suffix).Substring(0,$Length)
+}
+
+function Publish-LudusMagnusModule {
+    $psm1Content = ''
+    Get-Command -Name *-LudusMagnus* | ForEach-Object {
+        if($_.Name -ne $MyInvocation.MyCommand) {
+            $psm1Content+= "$($_.CommandType) $($_.Name) {$($_.Definition)}"
+            $psm1Content+= [System.Environment]::NewLine
+        }
+    }
+
+    $modulePath = Join-Path -Path (
+        (($env:PSModulePath -split ';') -match [regex]::Escape($env:ProgramFiles) + '.*PowerShell\\Modules')[0]
+    ) -ChildPath LudusMagnus
+    New-Item -Path $modulePath -ItemType Directory -Force | Out-Null
+    New-Item -Path $modulePath -ItemType File -Name LudusMagnus.psm1 -Value $psm1Content -Force | Out-Null
+    New-ModuleManifest -Path $modulePath\LudusMagnus.psd1 -RootModule .\LudusMagnus.psm1 -ModuleVersion ('{0:yyMM}.{0:dd}.{0:HH}.{0:mm}' -f (Get-Date))
+}
 #endregion
+
+

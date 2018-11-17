@@ -580,16 +580,12 @@
                 "UserName": "[variables('VmAdminUserName')]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
-              "Flag8Value": {
-                "UserName": "[variables('VmAdminUserName')]",
-                "Password": "PrivateSettingsRef:DomainPassword"
-              }
+              "Flag8Value": "[parameters('Flag8Value')]"
             }
           },
           "protectedSettings": {
             "Items": {
-              "DomainPassword": "[parameters('DomainPassword')]",
-              "Flag8Value": "[parameters('Flag8Value')]"
+              "DomainPassword": "[parameters('DomainPassword')]"
             }
           }
         }
