@@ -334,22 +334,21 @@ Configuration IIS {
     Import-DscResource -ModuleName ComputerManagementDsc
     Import-DscResource -ModuleName xWebAdministration
 
-    $ComputerName = $env:ComputerName
-    $DomainName =  Split-Path $DomainCreds.UserName
-    $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        (Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
-    )
-    $DomainCreds.GetNetworkCredential().password | Out-File -FilePath C:\Windows\Temp\pass.txt
+	$ComputerName = $env:ComputerName
+	$DomainName =  Split-Path $DomainCreds.UserName
+	$NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
+		(Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
+	)
+	$DomainCreds.GetNetworkCredential().Password | Out-File -FilePath C:\Windows\Temp\pass.txt
 
-    $AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        'flag8', (('F|_4@8:{' + $Flag8Value + '}') | ConvertTo-SecureString -AsPlainText -Force)
-    )
+	$AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
+		'flag8', (('F|_4@8:{' + $Flag8Value + '}') | ConvertTo-SecureString -AsPlainText -Force)
+	)
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
 		$_.InvokeMethod('ReleaseDHCPLease', $null)
 		$_.InvokeMethod('RenewDHCPLease', $null)
 	}
-
 
     node localhost {
 
@@ -386,7 +385,7 @@ Configuration IIS {
         Group AppPoolIdentityPermissions {
             Ensure           = 'Present'
             GroupName        = 'Administrators'
-            MembersToInclude = @($UserCredential.UserName, $AppPoolIdentity.UserName)
+            MembersToInclude = @($DomainCreds.UserName, $AppPoolIdentity.UserName)
             DependsOn        = '[User]AppPoolIdentity'
         }
 
