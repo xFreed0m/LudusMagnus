@@ -36,20 +36,6 @@ Configuration ADDS {
             ActionAfterReboot    = 'ContinueConfiguration'
         }
 
-        Write-Verbose 'Creating configuration for Disk2' -Verbose
-        WaitforDisk Disk2 {
-            DiskId           = 2
-            RetryIntervalSec = 5
-            RetryCount       = 3
-        }
-
-        Write-Verbose 'Creating configuration for ADDataDisk' -Verbose
-        Disk ADDataDisk {
-            DiskId      = 2
-            DriveLetter = "F"
-            DependsOn   = "[WaitForDisk]Disk2"
-        }
-
         Write-Verbose 'Creating configuration for the Windows Features:' -Verbose
         $Features = @(
             'AD-Domain-Services',
@@ -84,15 +70,23 @@ Configuration ADDS {
             DependsOn      = '[WindowsFeature]DNS', '[xRemoteFile]CreateADUsersCsv'
         }
 
+        File NTDSFolder {
+            Ensure = 'Present'
+            Type = 'Directory'
+            DestinationPath = 'C:\ADDS'
+        }
+
         Write-Verbose 'Creating configuration for CreateForest' -Verbose
         xADDomain CreateForest {
             DomainName                    = $DomainName
             DomainAdministratorCredential = $DomainCreds
             SafemodeAdministratorPassword = $DomainCreds
-            DatabasePath                  = 'F:\ADDS\NTDS'
-            LogPath                       = 'F:\ADDS\NTDS'
-            SysvolPath                    = 'F:\ADDS\Sysvol'
-            DependsOn                     = '[WindowsFeature]AD-Domain-Services', '[Disk]ADDataDisk', '[xRemoteFile]CreateADUsersCsv'
+            DatabasePath                  = 'C:\ADDS\NTDS'
+            LogPath                       = 'C:\ADDS\NTDS'
+            SysvolPath                    = 'C:\ADDS\Sysvol'
+            ForestMode = 'Win2008R2'
+            DomainMode = 'Win2008R2'
+            DependsOn                     = '[WindowsFeature]AD-Domain-Services', '[xRemoteFile]CreateADUsersCsv', '[File]NTDSFolder'
         }
 
         Write-Verbose 'Creating configuration for CreateUsers' -Verbose
@@ -648,7 +642,7 @@ function Import-LudusMagnusADUsers {
         $DestinationOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.State)`"" -SearchBase $CountryOU.DistinguishedName
         $User | Select-Object -Property @{Name='Path'; Expression={$DestinationOU.DistinguishedName}}, * |
             New-ADUser -ErrorAction SilentlyContinue -Verbose | Out-Null
-        Add-ADGroupMember -Identity $User.Department -Members $User.SamAccountName -Verbose | Out-Null
+        Add-ADGroupMember -Identity $User.Department -Members $User.SamAccountName -ErrorAction SilentlyContinue -Verbose | Out-Null
     }
 
     Write-Verbose 'Setting department managers' -Verbose

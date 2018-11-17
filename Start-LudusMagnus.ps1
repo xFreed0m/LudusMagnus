@@ -1,17 +1,14 @@
-﻿# Login-AzAccount
-# Get-AzSubscription
-# Select-AzSubscription -Subscription '00000000-0000-0000-0000-000000000000'
+﻿param(
+    $ResourceGroupName = ('LudusMagnus-{0:yyyyMMddHHmm}' -f (Get-Date)),
+    $Location = 'westeurope'
+)
 
-### DO NOT CHANGE ANYTHING BELOW THIS LINE ###
 $tamplateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master'
-$location = 'westeurope'
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
-$resourceGroupName = 'Sandbox'
-$deploymentName = '{0}-{1:yyyyMMddHHmm}' -f $resourceGroupName, (Get-Date)
 $deploymentParams = @{
     TemplateUri             = $tamplateBaseUrl + '/azuredeploy.json'
-    ResourceGroupName       = $resourceGroupName
-    Name                    = $deploymentName
+    ResourceGroupName       = $ResourceGroupName
+    Name                    = ('LudusMagnusDeployment-{0:yyyyMMddHHmm}' -f (Get-Date))
     Force                   = $true
     Verbose                 = $true
     ErrorVariable           = 'deploymentErrors'
@@ -19,21 +16,21 @@ $deploymentParams = @{
     ClientAllowedIP         = '{0}/32' -f $publicIP
 }
 
-# Add the flags
+# Add the flags values as deployment parameters
 $rand = Get-Random -Minimum 0 -Maximum 9; $rand = ''
 $flags = ((Invoke-WebRequest -Uri (($tamplateBaseUrl + '/azuredeploy.parameters{0}.json') -f $rand)).Content | ConvertFrom-Json).parameters
 $flags | Select-Object -Property Flag*Value | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name | ForEach-Object {
     $deploymentParams.Add($_, ($flags | Select-Object -ExpandProperty $_).Value)
 }
 
-# Add the passwords
+# Add the passwords as deployment parameters
 $flags | Select-Object -Property *Password* | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name | ForEach-Object {
     $deploymentParams.Add($_, ((($flags | Select-Object -ExpandProperty $_).Value) | ConvertTo-SecureString -AsPlainText -Force))
 }
 
 # Verify the ResourceGroup exists
 if (-not (Get-AzResourceGroup -Name $resourceGroupName -ErrorAction SilentlyContinue)) {
-    New-AzResourceGroup -Name $resourceGroupName -Location $location
+    New-AzResourceGroup -Name $resourceGroupName -Location $Location | Out-Null
 }
 
 # Start the deployment
@@ -45,6 +42,7 @@ if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
     UserName: {1}
     Password: {2}
 '@ -f ($deploymentResult.Outputs.Values)[0].Value, ($deploymentResult.Outputs.Values)[1].Value, $flags['VmAdminPassword']
-} else {
+}
+else {
     $deploymentResult
 }
