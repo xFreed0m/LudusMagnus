@@ -342,7 +342,7 @@ Configuration IIS {
 	$DomainCreds.GetNetworkCredential().Password | Out-File -FilePath C:\Windows\Temp\pass.txt
 
 	$AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
-		'flag8', (('F|_4@8:{' + $Flag8Value + '}') | ConvertTo-SecureString -AsPlainText -Force)
+		'flag8', (('Fl@g8:{' + $Flag8Value + '}') | ConvertTo-SecureString -AsPlainText -Force)
 	)
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -385,7 +385,7 @@ Configuration IIS {
         Group AppPoolIdentityPermissions {
             Ensure           = 'Present'
             GroupName        = 'Administrators'
-            MembersToInclude = @($DomainCreds.UserName, $AppPoolIdentity.UserName)
+            MembersToInclude = @((Split-Path $DomainCreds.UserName -Leaf), $AppPoolIdentity.UserName)
             DependsOn        = '[User]AppPoolIdentity'
         }
 
