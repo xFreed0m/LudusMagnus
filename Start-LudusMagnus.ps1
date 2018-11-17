@@ -41,7 +41,7 @@ Write-Host @"
       prepare your weapons until the arena master
       will call your name.
       AKA get a coffee until the webapp will pop open.
-      
+
 Brought to you by @martin77s & @x_Freed0m
 "@
 
