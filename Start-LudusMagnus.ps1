@@ -3,6 +3,39 @@
     $Location = 'westeurope'
 )
 
+Write-Host @"
+	Welcome to LudusMagnus!
+                                .-.
+                               {{@}}
+               <>               8@8
+             .::::.             888
+         @\\/W\/\/W\//@         8@8
+          \\/^\/\/^\//     _    )8(    _
+           \_O_<>_O_/     (@)__/8@8\__(@)
+      ____________________ `~"-=):(=-"~`
+     |<><><>  |  |  <><><>|     |.|
+     |<>      |  |      <>|     |M|
+     |<>      |  |      <>|     |'|
+     |<>   .--------.   <>|     |.|
+     |     |   ()   |     |     |S|
+     |_____| (O\/O) |_____|     |'|
+     |     \   /\   /     |     |.|
+     |------\  \/  /------|     |R|
+     |       '.__.'       |     |'|
+     |        |  |        |     |.|
+     :        |  |        :     |F|
+      \<>     |  |     <>/      |'|
+       \<>    |  |    <>/       |.|
+        \<>   |  |   <>/        |S|
+         \<>  |  |  <>/         |'|
+          \-. |  | .-/          \ /
+              '--'               . 
+  Creating the arena might take some time...
+  prepare your weapons until the arena master will call your name
+  (AKA the web app will pop open...)
+  @martin77s & @x_Freed0m
+"@
+
 $tamplateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master'
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
 $deploymentParams = @{
