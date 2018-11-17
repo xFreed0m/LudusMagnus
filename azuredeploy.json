@@ -59,6 +59,14 @@
     "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('deployment-vnetName'))]",
     "SubnetRef": "[concat(variables('VnetID'), '/subnets/', variables('deployment-vnetSubnetName'))]",
 
+    "DomainName": "LudusMagnus.local",
+    "DscExtensionUpdateTagVersion": "[concat(uniqueString(deployment().name))]",
+    "DscUrl": "[uri(deployment().properties.templateLink.uri, 'DSC/DSC.zip')]",
+    "LinuxCommandToExecute": "runlibssh.sh",
+    "LinuxScriptUri": "[uri(deployment().properties.templateLink.uri, 'scripts/runlibssh.sh')]",
+    "DomainUsersData": "[uri(deployment().properties.templateLink.uri, 'scripts/ADUsers.csv')]",
+    "deploymentUrl-VNET": "[uri(deployment().properties.templateLink.uri, 'nestedtemplates/vnet-with-dns-server.json')]",
+
     "WindowsImagePublisher": "MicrosoftWindowsServer",
     "WindowsImageOffer": "WindowsServer",
     "LinuxImagePublisher": "Canonical",
@@ -108,14 +116,7 @@
     "LinuxVmSize": "Standard_DS3_v2",
     "LinuxOsImage": "16.04.0-LTS",
     "LinuxNicName": "[concat(variables('LinuxName'), '-NIC')]",
-    "LinuxStaticIP": "10.0.0.9",
-
-    "DomainName": "LudusMagnus.local",
-    "DscUrl": "[uri(deployment().properties.templateLink.uri, 'DSC/DSC.zip')]",
-    "LinuxCommandToExecute": "runlibssh.sh",
-    "LinuxScriptUri": "[uri(deployment().properties.templateLink.uri, 'scripts/runlibssh.sh')]",
-    "DomainUsersData": "[uri(deployment().properties.templateLink.uri, 'scripts/ADUsers.csv')]",
-    "deploymentUrl-VNET": "[uri(deployment().properties.templateLink.uri, 'nestedtemplates/vnet-with-dns-server.json')]"
+    "LinuxStaticIP": "10.0.0.9"
   },
   "resources": [{
       "name": "[variables('deployment-vnetName')]",
@@ -380,7 +381,7 @@
           "type": "DSC",
           "typeHandlerVersion": "2.9",
           "autoUpgradeMinorVersion": true,
-          "forceUpdateTag": "variables('DscExtensionUpdateTagVersion')",
+          "forceUpdateTag": "[variables('DscExtensionUpdateTagVersion')]",
           "settings": {
             "wmfVersion": "latest",
             "configurationFunction": "DSC.ps1\\ADDS",
@@ -492,7 +493,7 @@
           "type": "DSC",
           "typeHandlerVersion": "2.9",
           "autoUpgradeMinorVersion": true,
-          "forceUpdateTag": "variables('DscExtensionUpdateTagVersion')",
+          "forceUpdateTag": "[variables('DscExtensionUpdateTagVersion')]",
           "settings": {
             "wmfVersion": "latest",
             "configurationFunction": "DSC.ps1\\JumpBox",
@@ -571,7 +572,7 @@
           "type": "DSC",
           "typeHandlerVersion": "2.9",
           "autoUpgradeMinorVersion": true,
-          "forceUpdateTag": "variables('DscExtensionUpdateTagVersion')",
+          "forceUpdateTag": "[variables('DscExtensionUpdateTagVersion')]",
           "settings": {
             "wmfVersion": "latest",
             "configurationFunction": "DSC.ps1\\IIS",
@@ -649,7 +650,7 @@
           "type": "DSC",
           "typeHandlerVersion": "2.9",
           "autoUpgradeMinorVersion": true,
-          "forceUpdateTag": "variables('DscExtensionUpdateTagVersion')",
+          "forceUpdateTag": "[variables('DscExtensionUpdateTagVersion')]",
           "settings": {
             "wmfVersion": "latest",
             "configurationFunction": "DSC.ps1\\SQL",
@@ -732,7 +733,7 @@
           "type": "DSC",
           "typeHandlerVersion": "2.9",
           "autoUpgradeMinorVersion": true,
-          "forceUpdateTag": "variables('DscExtensionUpdateTagVersion')",
+          "forceUpdateTag": "[variables('DscExtensionUpdateTagVersion')]",
           "settings": {
             "wmfVersion": "latest",
             "configurationFunction": "DSC.ps1\\FS",
