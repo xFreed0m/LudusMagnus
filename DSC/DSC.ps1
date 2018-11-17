@@ -67,15 +67,16 @@ Configuration ADDS {
         xRemoteFile CreateADUsersCsv {
             Uri             = $ADUsersUri
             DestinationPath = 'C:\ADDS\ADUsers.csv'
+            DependsOn       = '[File]ADDSFolder'
         }
 
-        Write-Verbose 'Creating configuration for DnsServerAddress' -Verbose
-        DnsServerAddress DnsServerAddress {
-            Address        = '127.0.0.1'
-            InterfaceAlias = $interfaceAlias
-            AddressFamily  = 'IPv4'
-            DependsOn      = '[WindowsFeature]DNS', '[xRemoteFile]CreateADUsersCsv'
-        }
+        # Write-Verbose 'Creating configuration for DnsServerAddress' -Verbose
+        # DnsServerAddress DnsServerAddress {
+        #     Address        = '127.0.0.1'
+        #     InterfaceAlias = $interfaceAlias
+        #     AddressFamily  = 'IPv4'
+        #     DependsOn      = '[WindowsFeature]DNS', '[xRemoteFile]CreateADUsersCsv'
+        # }
 
         Write-Verbose 'Creating configuration for CreateForest' -Verbose
         xADDomain CreateForest {
@@ -103,7 +104,7 @@ Configuration ADDS {
 
             SetScript = {
                 Set-Content -Path 'C:\ADDS\ADUsers.flag' -Value (Get-Date -Format yyyy-MM-dd-HH-mm-ss-ff)
-                Import-LudusMagnusADUsers -CsvPath 'C:\Windows\Temp\ADUsers.csv'
+                Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv'
             }
             DependsOn = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
         }
