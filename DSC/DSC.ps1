@@ -4,8 +4,7 @@ Configuration ADDS {
     [CmdletBinding()]
 
     param (
-        [string] $DomainName,
-        [PSCredential] $UserCredential,
+        [PSCredential] $DomainCreds,
         [string] $Flag9Value,
         [string] $ADUsersUri
     )
@@ -18,10 +17,8 @@ Configuration ADDS {
     Import-DscResource -ModuleName xPSDesiredStateConfiguration
 
     Publish-LudusMagnusModule
+    $DomainName =  Split-Path $DomainCreds.UserName
     $interfaceAlias = Get-NetAdapter | Where-Object { $_.Name -Like 'Ethernet*' } | Select-Object -First 1 -ExpandProperty Name
-    $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ('{0}\{1}' -f $DomainName, $UserCredential.UserName), ($UserCredential.Password)
-    )
 
     New-Object System.Management.Automation.PSCredential -ArgumentList (
         'NT AUTHORITY\SYSTEM', ($Flag9Value | ConvertTo-SecureString -AsPlainText -Force)
@@ -117,9 +114,7 @@ Configuration JumpBox {
     [CmdletBinding()]
 
     param (
-        [string] $DomainName,
-        [string] $ComputerName,
-        [PSCredential] $UserCredential,
+        [PSCredential] $DomainCreds,
         [string] $Flag0Value
     )
 
@@ -127,9 +122,8 @@ Configuration JumpBox {
     Import-DscResource -ModuleName xActiveDirectory
     Import-DscResource -ModuleName ComputerManagementDsc
 
-    $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
-    )
+    $ComputerName = $env:ComputerName
+    $DomainName =  Split-Path $DomainCreds.UserName
     $DomainCreds.GetNetworkCredential().password | Out-File -Path C:\Windows\Temp\pass.txt
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -191,10 +185,7 @@ Configuration SQL {
     [CmdletBinding()]
 
     param (
-
-        [string] $DomainName,
-        [string] $ComputerName,
-        [PSCredential] $UserCredential,
+        [PSCredential] $DomainCreds,
         [PSCredential] $SQLAuthCreds,
         [string] $DatabaseName,
         [string] $Flag5Value
@@ -207,11 +198,10 @@ Configuration SQL {
     Import-DscResource -ModuleName SqlServerDsc
 
     $InstanceName = 'MSSQLSERVER'
-    $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
-    )
+    $ComputerName = $env:ComputerName
+    $DomainName =  Split-Path $DomainCreds.UserName
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ($UserCredential.UserName), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
+        (Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -231,7 +221,7 @@ Configuration SQL {
         Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
         User ChangeLocalAdminPassword {
             Ensure   = 'Present'
-            UserName = $UserCredential.UserName
+            UserName = $NewLocalCreds.UserName
             Password = $NewLocalCreds
         }
 
@@ -335,9 +325,7 @@ Configuration IIS {
     [CmdletBinding()]
 
     param (
-        [string] $DomainName,
-        [string] $ComputerName,
-        [PSCredential] $UserCredential,
+        [PSCredential] $DomainCreds,
         [string] $Flag8Value
     )
 
@@ -346,14 +334,13 @@ Configuration IIS {
     Import-DscResource -ModuleName ComputerManagementDsc
     Import-DscResource -ModuleName xWebAdministration
 
-    $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
+    $ComputerName = $env:ComputerName
+    $DomainName =  Split-Path $DomainCreds.UserName
+    $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
+        (Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
     $DomainCreds.GetNetworkCredential().password | Out-File -Path C:\Windows\Temp\pass.txt
-    
-    $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ($UserCredential.UserName), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
-    )
+
     $AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
         'flag8', ("F|_4@8:{$Flag8Value}" | ConvertTo-SecureString -AsPlainText -Force)
     )
@@ -424,7 +411,7 @@ Configuration IIS {
         Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
         User ChangeLocalAdminPassword {
             Ensure   = 'Present'
-            UserName = $UserCredential.UserName
+            UserName = $NewLocalCreds.UserName
             Password = $NewLocalCreds
         }
 
@@ -451,9 +438,7 @@ Configuration FS {
     [CmdletBinding()]
 
     param (
-        [string] $DomainName,
-        [string] $ComputerName,
-        [PSCredential] $UserCredential,
+        [PSCredential] $DomainCreds,
         [string] $Flag3Value,
         [string] $Flag4Value
     )
@@ -464,11 +449,10 @@ Configuration FS {
     Import-DscResource -ModuleName ComputerManagementDsc
 
     $SharePath = 'C:\Windows\IdentityCRL\production'
-    $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
-    )
+    $ComputerName = $env:ComputerName
+    $DomainName =  Split-Path $DomainCreds.UserName
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ($UserCredential.UserName), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
+        (Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -531,7 +515,7 @@ Configuration FS {
         Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
         User ChangeLocalAdminPassword {
             Ensure   = 'Present'
-            UserName = $UserCredential.UserName
+            UserName = $NewLocalCreds.UserName
             Password = $NewLocalCreds
         }
 

@@ -387,9 +387,8 @@
             "configurationFunction": "DSC.ps1\\ADDS",
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
-              "DomainName": "[variables('DomainName')]",
-              "UserCredential": {
-                "UserName": "[variables('VmAdminUserName')]",
+              "DomainCreds": {
+                "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "Flag9Value": "[parameters('Flag9Value')]",
@@ -499,10 +498,8 @@
             "configurationFunction": "DSC.ps1\\JumpBox",
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
-              "DomainName": "[variables('DomainName')]",
-              "ComputerName": "[variables('JumpBoxName')]",
-              "UserCredential": {
-                "UserName": "[variables('VmAdminUserName')]",
+              "DomainCreds": {
+                "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "Flag0Value": "[parameters('Flag0Value')]"
@@ -577,10 +574,8 @@
             "configurationFunction": "DSC.ps1\\IIS",
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
-              "DomainName": "[variables('DomainName')]",
-              "ComputerName": "[variables('IISName')]",
-              "UserCredential": {
-                "UserName": "[variables('VmAdminUserName')]",
+              "DomainCreds": {
+                "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "Flag8Value": "[parameters('Flag8Value')]"
@@ -655,14 +650,12 @@
             "configurationFunction": "DSC.ps1\\SQL",
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
-              "DomainName": "[variables('DomainName')]",
-              "ComputerName": "[variables('SQLName')]",
-              "UserCredential": {
-                "UserName": "[variables('VmAdminUserName')]",
+              "DomainCreds": {
+                "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "SQLAuthCreds": {
-                "UserName": "[variables('VmAdminUserName')]",
+                "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "DatabaseName": "[variables('DomainName')]",
@@ -738,10 +731,8 @@
             "configurationFunction": "DSC.ps1\\FS",
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
-              "DomainName": "[variables('DomainName')]",
-              "ComputerName": "[variables('FSName')]",
-              "UserCredential": {
-                "UserName": "[variables('VmAdminUserName')]",
+              "DomainCreds": {
+                "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "Flag3Value": "[parameters('Flag3Value')]",
