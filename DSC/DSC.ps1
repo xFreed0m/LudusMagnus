@@ -120,7 +120,6 @@ Configuration JumpBox {
         [string] $DomainName,
         [string] $ComputerName,
         [PSCredential] $UserCredential,
-        [string] $LocalAdmin,
         [string] $Flag0Value
     )
 
@@ -131,12 +130,7 @@ Configuration JumpBox {
     $DomainCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         ('{0}\{1}' -f $DomainName, $UserCredential.UserName), $UserCredential.Password
     )
-    $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        ($LocalAdmin), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
-    )
-
     $DomainCreds | Export-Clixml -Path C:\Windows\Temp\dcreds.xml
-    $NewLocalCreds | Export-Clixml -Path C:\Windows\Temp\lcreds.xml
 
 	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
 		$_.InvokeMethod('ReleaseDHCPLease', $null)
@@ -174,18 +168,11 @@ Configuration JumpBox {
             Contents        = "flag0:{$Flag0Value}"
         }
 
-        Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
-        User ChangeLocalAdminPassword {
-            Ensure   = 'Present'
-            UserName = $NewLocalCreds.UserName
-            Password = $NewLocalCreds
-        }
-
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose
         xWaitForADDomain WaitForDomain {
             DomainName       = $DomainName
             RetryCount       = 60
-            RetryIntervalSec = 30
+            RetryIntervalSec = 15
         }
 
         Write-Verbose 'Creating configuration for DomainJoin' -Verbose
@@ -329,7 +316,7 @@ Configuration SQL {
         xWaitForADDomain WaitForDomain {
             DomainName       = $DomainName
             RetryCount       = 60
-            RetryIntervalSec = 30
+            RetryIntervalSec = 15
         }
 
         Write-Verbose 'Creating configuration for DomainJoin' -Verbose
@@ -443,7 +430,7 @@ Configuration IIS {
         xWaitForADDomain WaitForDomain {
             DomainName       = $DomainName
             RetryCount       = 60
-            RetryIntervalSec = 30
+            RetryIntervalSec = 15
         }
 
         Write-Verbose 'Creating configuration for DomainJoin' -Verbose
@@ -550,7 +537,7 @@ Configuration FS {
         xWaitForADDomain WaitForDomain {
             DomainName       = $DomainName
             RetryCount       = 60
-            RetryIntervalSec = 30
+            RetryIntervalSec = 15
         }
 
         Write-Verbose 'Creating configuration for DomainJoin' -Verbose
