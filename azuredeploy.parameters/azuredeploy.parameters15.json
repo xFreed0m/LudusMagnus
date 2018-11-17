@@ -1,0 +1,42 @@
+{
+ "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#", 
+ "contentVersion": "1.0.0.0", 
+ "parameters": {
+  "ClientAllowedIP": {
+   "value": "0.0.0.0/32"
+  }, 
+  "Flag0Value": {
+   "value": "c7edf6Da9CBd48AaE0FD1F82d"
+  }, 
+  "Flag1Value": {
+   "value": "E3Da8A2DA97157B1e5Fbcde07"
+  }, 
+  "Flag2Value": {
+   "value": "B3Ec58eBBDADEe7B45b849A7c"
+  }, 
+  "Flag3Value": {
+   "value": "bDAD6Ed9B382cDB406fc5eE7B"
+  }, 
+  "Flag4Value": {
+   "value": "FAcCc7dAEB0D2F0FEf6b67cD6"
+  }, 
+  "Flag5Value": {
+   "value": "aEDCB12Dc5a2aAdb5Cb0BB6A8"
+  }, 
+  "Flag6Value": {
+   "value": "EdcDA739FAACAd4FbBc1Ff80b"
+  }, 
+  "Flag7Value": {
+   "value": "00Abe63C7cadFcDcD15E0D6B6"
+  }, 
+  "Flag8Value": {
+   "value": "F6ADCEeDAD28B41aBbc89BEae"
+  }, 
+  "Flag9Value": {
+   "value": "A95d47a96ED7803bDfae82a93"
+  }, 
+  "VmAdminPassword": {
+   "value": "P@55w0rd!"
+  }
+ }
+}
