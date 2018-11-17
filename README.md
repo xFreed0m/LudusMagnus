@@ -112,6 +112,9 @@ This code is open-source, therefore free for private use. The Azure Cloud costs 
 While considering that, every new account that signs up for Azure subscriptions receives 200$ for free (Thank you Microsoft!) and currently (Nov 2018) the costs of running this environment for 24 hours is approx. 160$.
 If you set up a different environemnt (more machines, etc.) you can calculate your estimated costs here: [Azure Cost Calc](https://azure.microsoft.com/en-us/pricing/calculator/)
 
+## Tips & Hints
+We decided to not include any tips or hints.
+This environment is supposed to to give you the feeling of a real enterprise, and yes, we know it's very limited (no guard with tasers..) but we did what we could think of, and if you have more ideas, feel free to add them, or to let us know.
 #
 
 > Created by Martin Schvartzman (@martin77s) and Roei Sherman (@x_Freedom)
