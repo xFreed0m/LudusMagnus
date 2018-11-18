@@ -36,7 +36,8 @@ Write-Host @"
 [+]         \<>  |  |  <>/         |'|          [+]
 [+]          \-. |  | .-/          \ /          [+]
 [+]              '--'               .           [+]
-[+]version: $version                            [+]
+[+]                                             [+]
+[+] version: $version                           [+]
 [+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+]
 
       Creating the arena might take some time...
@@ -45,6 +46,7 @@ Write-Host @"
       AKA get a coffee until the webapp will pop open.
 
 Brought to you by @martin77s & @x_Freed0m
+
 "@ -Foreground darkcyan -Background black
 
 
