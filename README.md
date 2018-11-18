@@ -36,7 +36,7 @@ Get-AzSubscription
 Select-AzSubscription -Subscription '00000000-0000-0000-0000-000000000000'
 ```
 
-And simply run the Start-LudusMagnus.ps1 script:
+And simply run the Start-LudusMagnus.ps1 script (*no need to clone\download the entire repo*):
 
 ```powershell
 ./Start-LudusMagnus.ps1
