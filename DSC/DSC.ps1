@@ -298,8 +298,8 @@ Configuration SQL {
                 BEGIN; RAISERROR ('Flag not ready on [$($using:DatabaseName)]', 16, 1); END
                 ELSE BEGIN; PRINT 'True'; END
 "@
-            GetQuery     = "SELECT TOP 1 [flag] FROM [$using:DatabaseName].[dbo].[CTF] FOR JSON AUTO"
-            SetQuery     = "USE [$using:DatabaseName]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ('flag5:{$using:Flag5Value}');"
+            GetQuery     = "SELECT TOP 1 [flag] FROM [$($using:DatabaseName)].[dbo].[CTF] FOR JSON AUTO"
+            SetQuery     = "USE [$($using:DatabaseName)]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ('flag5:{$($using:Flag5Value)}');"
         }
 
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose
