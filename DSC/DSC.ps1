@@ -302,6 +302,34 @@ Configuration SQL {
             SetQuery     = "USE [$($using:DatabaseName)]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ('flag5:{$($using:Flag5Value)}');"
         }
 
+        Write-Verbose 'Creating configuration for Flag 5' -Verbose
+        script Flag5 {
+
+            TestScript = {
+                    $cmd = 'osql.exe -E -S {0} -Q "SET NOCOUNT ON; SELECT Count([flag]) FROM [{1}].[dbo].[CTF]"' -f $using:ComputerName, $using:DatabaseName
+                    $res = Invoke-Expression $cmd
+                    if(($res -join [environment]::NewLine) -match '(?m)-+\s+(?<flags>\d)') {
+                        $matches['flags'] -eq 1
+                    } else {
+                        $false
+                    }
+             }
+
+            GetScript = {
+                    $cmd = 'osql.exe -E -S {0} -Q "SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{1}].[dbo].[CTF]"' -f $using:ComputerName, $using:DatabaseName
+                    $res = Invoke-Expression $cmd
+                    ($res -join [environment]::NewLine) -match '(?m)-+\s+(?<flags>flag5:.*\})'
+                    @{Return = $matches['flags']}
+            }
+
+            SetScript = {
+                    $cookedFlagValue = "'flag5:{$using:Flag5Value}"
+                    $cmd = 'osql.exe -E -S {0} -Q "USE [{1}]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ({2})"' -f $using:ComputerName, $using:DatabaseName, $cookedFlagValue
+                    $res = Invoke-Expression $cmd
+            }
+            DependsOn = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
+        }
+
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose
         xWaitForADDomain WaitForDomain {
             DomainName       = $DomainName
