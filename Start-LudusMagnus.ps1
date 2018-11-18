@@ -3,7 +3,7 @@
     $Location = 'westeurope'
 )
 
-$Version = '0.0.0.1'
+$Version = '0.0.0.2'
 
 Write-Host @"
 
@@ -50,7 +50,15 @@ Brought to you by @martin77s & @x_Freed0m
 
 "@ -Foreground darkcyan -Background black
 
-
+$content = (Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master/Start-LudusMagnus.ps1').Content
+if($content -match "(?m)\`$Version = '(?<version>.*)'$") {
+	$onlineVersion = $Matches['version']
+    if($Version -ne $onlineVersion) {
+        $content | Out-File -FilePath $MyInvocation.MyCommand.Path -Force
+        Write-Host 'Updated version detected and downloaded, please run this script again'
+        exit
+    }
+}
 
 $templateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master'
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
