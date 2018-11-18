@@ -77,7 +77,7 @@
     "SqlSaUser": "sa",
     "SqlSaPassword": "[parameters('VmAdminPassword')]",
 
-    "storageAccountType": "Standard_LRS",
+    "storageAccountType": "Premium_LRS",
     "OSDiskName": "OSDisk",
     "VmAdminUserName": "sadmind",
     "JumpBoxAdmin": "jumpadmin",

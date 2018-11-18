@@ -290,16 +290,16 @@ Configuration SQL {
 
         Write-Verbose 'Creating configuration for Flag 5' -Verbose
         SqlScriptQuery Flag5 {
-            ServerInstance = ('{0}\{1}' -f $ComputerName, $InstanceName)
+            ServerInstance = $ComputerName
             QueryTimeout = 30
             DependsOn    = '[SqlDatabase]CreateDatabase'
             TestQuery    = @"
-                IF (SELECT Count([flag]) FROM [$($DatabaseName)].[dbo].[CTF]) = 0
-                BEGIN; RAISERROR ('Flag not ready on [$($DatabaseName)]', 16, 1); END
+                IF (SELECT Count([flag]) FROM [$($using:DatabaseName)].[dbo].[CTF]) = 0
+                BEGIN; RAISERROR ('Flag not ready on [$($using:DatabaseName)]', 16, 1); END
                 ELSE BEGIN; PRINT 'True'; END
 "@
-            GetQuery     = "SELECT TOP 1 [flag] FROM [$DatabaseName].[dbo].[CTF] FOR JSON AUTO"
-            SetQuery     = "USE [$DatabaseName]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ('$Flag5Value');"
+            GetQuery     = "SELECT TOP 1 [flag] FROM [$using:DatabaseName].[dbo].[CTF] FOR JSON AUTO"
+            SetQuery     = "USE [$using:DatabaseName]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ('flag5:{$using:Flag5Value}');"
         }
 
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose
@@ -391,10 +391,11 @@ Configuration IIS {
 
         Write-Verbose 'Creating configuration for ApplicationPool' -Verbose
         xWebAppPool Flag8 {
-            Ensure     = 'Present'
-            Name       = 'AppPool'
-            Credential = $AppPoolIdentity
-            DependsOn  = '[WindowsFeatureSet]Web-Server', '[User]AppPoolIdentity', '[Group]AppPoolIdentityPermissions'
+            Ensure       = 'Present'
+            Name         = 'AppPool'
+            IdentityType = 'SpecificUser'
+            Credential   = $AppPoolIdentity
+            DependsOn    = '[WindowsFeatureSet]Web-Server', '[User]AppPoolIdentity', '[Group]AppPoolIdentityPermissions'
         }
 
         Write-Verbose 'Creating configuration for the Default Web Site' -Verbose
