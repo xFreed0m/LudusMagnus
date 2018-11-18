@@ -63,7 +63,7 @@ $deploymentParams = @{
 }
 
 # Add the flags values as deployment parameters
-$templateParametersUri = ($tamplateBaseUrl + '/azuredeploy.parameters/azuredeploy.parameters{0}.json') -f (Get-Random -Minimum 0 -Maximum 99)
+$templateParametersUri = ($templateBaseUrl + '/azuredeploy.parameters/azuredeploy.parameters{0}.json') -f (Get-Random -Minimum 0 -Maximum 99)
 $flags = ((Invoke-WebRequest -Uri ($templateParametersUri)).Content | ConvertFrom-Json).parameters
 $flags | Select-Object -Property Flag*Value | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name | ForEach-Object {
     $deploymentParams.Add($_, ($flags | Select-Object -ExpandProperty $_).Value)
