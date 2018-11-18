@@ -3,6 +3,8 @@
     $Location = 'westeurope'
 )
 
+$Version = '0.0.0.1'
+
 Write-Host @"
 
 [+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+]
@@ -34,7 +36,7 @@ Write-Host @"
 [+]         \<>  |  |  <>/         |'|          [+]
 [+]          \-. |  | .-/          \ /          [+]
 [+]              '--'               .           [+]
-[+]                                             [+]
+[+]version: $version                            [+]
 [+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+]
 
       Creating the arena might take some time...
@@ -45,10 +47,12 @@ Write-Host @"
 Brought to you by @martin77s & @x_Freed0m
 "@ -Foreground darkcyan -Background black
 
-$tamplateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master'
+
+
+$templateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master'
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
 $deploymentParams = @{
-    TemplateUri             = $tamplateBaseUrl + '/azuredeploy.json'
+    TemplateUri             = $templateBaseUrl + '/azuredeploy.json'
     ResourceGroupName       = $ResourceGroupName
     Name                    = ('LudusMagnusDeployment-{0:yyyyMMddHHmm}' -f (Get-Date))
     Force                   = $true
