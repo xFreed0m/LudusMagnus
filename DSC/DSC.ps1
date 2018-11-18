@@ -313,7 +313,7 @@ Configuration SQL {
                     $cmd = 'osql.exe -E -S {0} -Q "USE [{1}]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ({2})"' -f $using:ComputerName, $using:DatabaseName, $cookedFlagValue
                     $res = Invoke-Expression $cmd
             }
-            DependsOn = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
+            DependsOn = '[SqlDatabase]CreateDatabase'
         }
 
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose
