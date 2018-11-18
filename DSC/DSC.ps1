@@ -289,20 +289,6 @@ Configuration SQL {
         }
 
         Write-Verbose 'Creating configuration for Flag 5' -Verbose
-        SqlScriptQuery Flag5 {
-            ServerInstance = $ComputerName
-            QueryTimeout = 30
-            DependsOn    = '[SqlDatabase]CreateDatabase'
-            TestQuery    = @"
-                IF (SELECT Count([flag]) FROM [$($using:DatabaseName)].[dbo].[CTF]) = 0
-                BEGIN; RAISERROR ('Flag not ready on [$($using:DatabaseName)]', 16, 1); END
-                ELSE BEGIN; PRINT 'True'; END
-"@
-            GetQuery     = "SELECT TOP 1 [flag] FROM [$($using:DatabaseName)].[dbo].[CTF] FOR JSON AUTO"
-            SetQuery     = "USE [$($using:DatabaseName)]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ('flag5:{$($using:Flag5Value)}');"
-        }
-
-        Write-Verbose 'Creating configuration for Flag 5' -Verbose
         script Flag5 {
 
             TestScript = {
