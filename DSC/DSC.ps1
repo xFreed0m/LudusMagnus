@@ -5,6 +5,7 @@ Configuration ADDS {
 
     param (
         [PSCredential] $DomainCreds,
+        [PSCredential] $JumpAdminCreds,
         [string] $ADUsersUri,
         [string] $Flag2Value,
         [string] $Flag9Value
@@ -103,6 +104,7 @@ Configuration ADDS {
             SetScript  = {
                 Set-Content -Path 'C:\ADDS\ADUsers.flag' -Value (Get-Date -Format yyyy-MM-dd-HH-mm-ss-ff)
                 Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv' -Flag2Value $using:Flag2Value
+                New-ADUser -Name $JumpAdminCreds.UserName -AccountPassword $JumpAdminCreds.Password -CannotChangePassword $true -Enabled $true
             }
             DependsOn  = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
         }
@@ -666,24 +668,6 @@ function Initialize-LudusMagnusPassword {
     ($Prefix + $Suffix).Substring(0, $Length)
 }
 
-function Publish-LudusMagnusModule {
-    $psm1Content = ''
-    Get-Command -Name *-LudusMagnus* | ForEach-Object {
-        if ($_.Name -ne $MyInvocation.MyCommand) {
-            $psm1Content += "$($_.CommandType) $($_.Name) {$($_.Definition)}"
-            $psm1Content += [System.Environment]::NewLine
-        }
-    }
-
-    $modulePath = Join-Path -Path (
-        (($env:PSModulePath -split ';') -match [regex]::Escape($env:ProgramFiles) + '.*PowerShell\\Modules')[0]
-    ) -ChildPath LudusMagnus
-    New-Item -Path $modulePath -ItemType Directory -Force | Out-Null
-    New-Item -Path $modulePath -ItemType File -Name LudusMagnus.psm1 -Value $psm1Content -Force | Out-Null
-    New-ModuleManifest -Path $modulePath\LudusMagnus.psd1 -RootModule .\LudusMagnus.psm1 -ModuleVersion ('{0:yyMM}.{0:dd}.{0:HH}.{0:mm}' -f (Get-Date))
-}
-
-
 function Invoke-LudusMagnusSqlNonQuery {
     param ($InstanceName, $CommandText)
     $ConnectionString = 'Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $InstanceName
@@ -734,6 +718,23 @@ function Invoke-LudusMagnusSqlQuery {
     }
 }
 
+
+function Publish-LudusMagnusModule {
+    $psm1Content = ''
+    Get-Command -Name *-LudusMagnus* | ForEach-Object {
+        if ($_.Name -ne $MyInvocation.MyCommand) {
+            $psm1Content += "$($_.CommandType) $($_.Name) {$($_.Definition)}"
+            $psm1Content += [System.Environment]::NewLine
+        }
+    }
+
+    $modulePath = Join-Path -Path (
+        (($env:PSModulePath -split ';') -match [regex]::Escape($env:ProgramFiles) + '.*PowerShell\\Modules')[0]
+    ) -ChildPath LudusMagnus
+    New-Item -Path $modulePath -ItemType Directory -Force | Out-Null
+    New-Item -Path $modulePath -ItemType File -Name LudusMagnus.psm1 -Value $psm1Content -Force | Out-Null
+    New-ModuleManifest -Path $modulePath\LudusMagnus.psd1 -RootModule .\LudusMagnus.psm1 -ModuleVersion ('{0:yyMM}.{0:dd}.{0:HH}.{0:mm}' -f (Get-Date))
+}
 #endregion
 
 
