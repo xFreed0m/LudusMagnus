@@ -299,27 +299,34 @@ Configuration SQL {
 
             TestScript = {
                 Import-Module -Name LudusMagnus
-                $res = Invoke-LudusMagnusSqlQuery -CommandText (
-                    'SET NOCOUNT ON; SELECT Count([flag]) as [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName
-                ) -Instance $env:ComputerName
-                if($res.flag) {
-                    1 -eq $res.flag
-                } else {
-                    $flase
-                }
-
+                $ret = $true
+                try {
+                    $res = Invoke-LudusMagnusSqlQuery -CommandText (
+                        'SET NOCOUNT ON; SELECT Count([flag]) as [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName
+                    ) -Instance $env:ComputerName
+                    if($res.flag) {
+                        1 -eq $res.flag
+                    } else {
+                        $flase
+                    }
+                 } catch {
+                    $ret = $false
+                 }
+                $ret
             }
 
             GetScript  = {
                 Import-Module -Name LudusMagnus
-                $res = Invoke-LudusMagnusSqlQuery -CommandText (
-                    'SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName
-                ) -Instance $env:ComputerName
-                if($res.flag) {
-                    @{Return = $res.flag}
-                } else {
-                    @{Return = $null}
-                }
+                $ret =  @{Return = $null}
+                try {
+                    $res = Invoke-LudusMagnusSqlQuery -CommandText (
+                        'SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName
+                    ) -Instance $env:ComputerName
+                    if($res.flag) {
+                        $ret = @{Return = $res.flag}
+                    }
+                } catch {}
+                $ret
             }
 
             SetScript  = {
