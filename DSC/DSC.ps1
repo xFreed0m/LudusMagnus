@@ -5,8 +5,9 @@ Configuration ADDS {
 
     param (
         [PSCredential] $DomainCreds,
-        [string] $Flag9Value,
-        [string] $ADUsersUri
+        [string] $ADUsersUri,
+        [string] $Flag2Value,
+        [string] $Flag9Value
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
@@ -101,7 +102,7 @@ Configuration ADDS {
 
             SetScript  = {
                 Set-Content -Path 'C:\ADDS\ADUsers.flag' -Value (Get-Date -Format yyyy-MM-dd-HH-mm-ss-ff)
-                Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv'
+                Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv' -Flag2Value $using:Flag2Value
             }
             DependsOn  = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
         }
@@ -560,7 +561,8 @@ Configuration FS {
 #region Helper functions
 function Import-LudusMagnusADUsers {
     param(
-        $CsvPath = 'C:\Windows\Temp\ADUsers.csv'
+        [string] $CsvPath = 'C:\Windows\Temp\ADUsers.csv',
+        [string] $Flag2Value
     )
 
     $Domain = Get-ADDomain
@@ -607,6 +609,8 @@ function Import-LudusMagnusADUsers {
     @{Name = 'PasswordNeverExpires'; Expression = {$True}},
     @{Name = 'AccountPassword'; Expression = { (ConvertTo-SecureString -String (Initialize-LudusMagnusPassword -Prefix 'P@5z') -AsPlainText -Force)}},
     GivenName, Surname, City, StreetAddress, State, Country, BirthDate
+
+    $Users[(Get-Random -Minimum 0 -Maximum $Users.Count)].Description = "flag2:{$Flag2Value}"
 
     Write-Verbose 'Creating groups' -Verbose
     foreach ($Department In $Departments.Name) {

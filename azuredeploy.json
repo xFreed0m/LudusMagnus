@@ -391,8 +391,9 @@
                 "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
-              "Flag9Value": "[parameters('Flag9Value')]",
-              "ADUsersUri": "[variables('DomainUsersData')]"
+              "ADUsersUri": "[variables('DomainUsersData')]",
+              "Flag2Value": "[parameters('Flag2Value')]",
+              "Flag9Value": "[parameters('Flag9Value')]"
             }
           },
           "protectedSettings": {
