@@ -207,6 +207,8 @@ Configuration SQL {
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         (Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
+    $DomainCreds.GetNetworkCredential().password | Out-File -FilePath C:\Windows\Temp\dpass.txt
+    $NewLocalCreds.GetNetworkCredential().password | Out-File -FilePath C:\Windows\Temp\lpass.txt
 
     Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
         $_.InvokeMethod('ReleaseDHCPLease', $null)
@@ -717,7 +719,6 @@ function Invoke-LudusMagnusSqlQuery {
         }
     }
 }
-
 
 function Publish-LudusMagnusModule {
     $psm1Content = ''
