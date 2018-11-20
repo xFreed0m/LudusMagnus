@@ -722,10 +722,14 @@ function Invoke-LudusMagnusSqlQuery {
 
 function Publish-LudusMagnusModule {
     $psm1Content = ''
+    $hash = @{}
     Get-Command -Name *-LudusMagnus* | ForEach-Object {
         if ($_.Name -ne $MyInvocation.MyCommand) {
-            $psm1Content += "$($_.CommandType) $($_.Name) {$($_.Definition)}"
-            $psm1Content += [System.Environment]::NewLine
+            if(-not ($hash.ContainsKey($_.Name))) {
+                $hash.Add($_.Name, 0)
+                $psm1Content += "$($_.CommandType) $($_.Name) {$($_.Definition)}"
+                $psm1Content += [System.Environment]::NewLine
+            }
         }
     }
 
@@ -736,6 +740,6 @@ function Publish-LudusMagnusModule {
     New-Item -Path $modulePath -ItemType File -Name LudusMagnus.psm1 -Value $psm1Content -Force | Out-Null
     New-ModuleManifest -Path $modulePath\LudusMagnus.psd1 -RootModule .\LudusMagnus.psm1 -ModuleVersion ('{0:yyMM}.{0:dd}.{0:HH}.{0:mm}' -f (Get-Date))
 }
-#endregion
 
+#endregion
 
