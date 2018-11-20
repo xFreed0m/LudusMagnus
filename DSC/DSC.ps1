@@ -298,30 +298,36 @@ Configuration SQL {
         script Flag5 {
 
             TestScript = {
+                Import-Module -Name LudusMagnus
                 $res = Invoke-LudusMagnusSqlQuery -CommandText (
-                    'SET NOCOUNT ON; SELECT Count([flag]) FROM [{1}].[dbo].[CTF]' -f $using:ComputerName, $using:DatabaseName
-                ) -Instance ('{0}\{1}', $env:ComputerName, '(local)')
-                if (($res -join [environment]::NewLine) -match '(?m)-+\s+(?<flags>\d)') {
-                    0 -lt $matches['flags']
+                    'SET NOCOUNT ON; SELECT Count([flag]) as [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName
+                ) -Instance $env:ComputerName
+                if($res.flag) {
+                    1 -eq $res.flag
+                } else {
+                    $flase
                 }
-                else {
-                    $false
-                }
+
             }
 
             GetScript  = {
+                Import-Module -Name LudusMagnus
                 $res = Invoke-LudusMagnusSqlQuery -CommandText (
-                    'SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{1}].[dbo].[CTF]' -f $using:ComputerName, $using:DatabaseName
-                ) -Instance ('{0}\{1}', $env:ComputerName, '(local)')
-                ($res -join [environment]::NewLine) -match '(?m)-+\s+(?<flags>flag5:.*\})'
-                @{Return = $matches['flags']}
+                    'SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName
+                ) -Instance $env:ComputerName
+                if($res.flag) {
+                    @{Return = $res.flag}
+                } else {
+                    @{Return = $null}
+                }
             }
 
             SetScript  = {
+                Import-Module -Name LudusMagnus
                 Invoke-LudusMagnusSqlNonQuery -CommandText (
-                    'USE [{1}]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ({2})' -f `
-                        $using:ComputerName, $using:DatabaseName, "'flag5:{$using:Flag5Value}"
-                ) -Instance ('{0}\{1}', $env:ComputerName, '(local)') | Out-Null
+                    "USE [{0}]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ('{2}')" -f `
+                        $using:DatabaseName, "flag5:{$using:Flag5Value}"
+                ) -Instance $env:ComputerName | Out-Null
             }
             DependsOn  = '[SqlDatabase]CreateDatabase'
         }
