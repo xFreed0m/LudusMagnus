@@ -17,8 +17,8 @@ Configuration ADDS {
     Import-DscResource -ModuleName xPSDesiredStateConfiguration
 
     Publish-LudusMagnusModule
-    $DomainName =  Split-Path $DomainCreds.UserName
-    $interfaceAlias = Get-NetAdapter | Where-Object { $_.Name -Like 'Ethernet*' } | Select-Object -First 1 -ExpandProperty Name
+    $DomainName = Split-Path $DomainCreds.UserName
+    #$interfaceAlias = Get-NetAdapter | Where-Object { $_.Name -Like 'Ethernet*' } | Select-Object -First 1 -ExpandProperty Name
 
     New-Object System.Management.Automation.PSCredential -ArgumentList (
         'NT AUTHORITY\SYSTEM', ($Flag9Value | ConvertTo-SecureString -AsPlainText -Force)
@@ -46,17 +46,17 @@ Configuration ADDS {
         )
 
         $Features.ForEach( {
-            Write-Verbose "`t - $_" -Verbose
-            WindowsFeature "$_" {
-                Ensure = 'Present'
-                Name   = $_
-            }
-        } )
+                Write-Verbose "`t - $_" -Verbose
+                WindowsFeature "$_" {
+                    Ensure = 'Present'
+                    Name   = $_
+                }
+            } )
 
         Write-Verbose 'Creating configuration for ADDSFolder' -Verbose
         File ADDSFolder {
-            Ensure = 'Present'
-            Type = 'Directory'
+            Ensure          = 'Present'
+            Type            = 'Directory'
             DestinationPath = 'C:\ADDS'
         }
 
@@ -95,15 +95,15 @@ Configuration ADDS {
                 Test-Path -Path 'C:\ADDS\ADUsers.flag'
             }
 
-            GetScript = {
+            GetScript  = {
                 @{Result = (Get-Content -Path 'C:\ADDS\ADUsers.flag')}
             }
 
-            SetScript = {
+            SetScript  = {
                 Set-Content -Path 'C:\ADDS\ADUsers.flag' -Value (Get-Date -Format yyyy-MM-dd-HH-mm-ss-ff)
                 Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv'
             }
-            DependsOn = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
+            DependsOn  = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
         }
     }
 }
@@ -123,13 +123,13 @@ Configuration JumpBox {
     Import-DscResource -ModuleName ComputerManagementDsc
 
     $ComputerName = $env:ComputerName
-    $DomainName =  Split-Path $DomainCreds.UserName
+    $DomainName = Split-Path $DomainCreds.UserName
     $DomainCreds.GetNetworkCredential().password | Out-File -FilePath C:\Windows\Temp\pass.txt
 
-	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
-		$_.InvokeMethod('ReleaseDHCPLease', $null)
-		$_.InvokeMethod('RenewDHCPLease', $null)
-	}
+    Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
+        $_.InvokeMethod('ReleaseDHCPLease', $null)
+        $_.InvokeMethod('RenewDHCPLease', $null)
+    }
 
     node localhost {
 
@@ -147,12 +147,12 @@ Configuration JumpBox {
         )
 
         $Features.ForEach( {
-            Write-Verbose "`t - $_" -Verbose
-            WindowsFeature "$_" {
-                Ensure = 'Present'
-                Name   = $_
-            }
-        } )
+                Write-Verbose "`t - $_" -Verbose
+                WindowsFeature "$_" {
+                    Ensure = 'Present'
+                    Name   = $_
+                }
+            } )
 
         Write-Verbose 'Creating configuration for Flag 0' -Verbose
         File Flag0 {
@@ -199,15 +199,15 @@ Configuration SQL {
 
     $InstanceName = 'MSSQLSERVER'
     $ComputerName = $env:ComputerName
-    $DomainName =  Split-Path $DomainCreds.UserName
+    $DomainName = Split-Path $DomainCreds.UserName
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         (Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
 
-	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
-		$_.InvokeMethod('ReleaseDHCPLease', $null)
-		$_.InvokeMethod('RenewDHCPLease', $null)
-	}
+    Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
+        $_.InvokeMethod('ReleaseDHCPLease', $null)
+        $_.InvokeMethod('RenewDHCPLease', $null)
+    }
 
     node localhost {
 
@@ -249,7 +249,7 @@ Configuration SQL {
         }
 
         Write-Verbose 'Creating configuration for the SqlLogin' -Verbose
-        SqlServerLogin SqlLogin        {
+        SqlServerLogin SqlLogin {
             Ensure                         = 'Present'
             ServerName                     = $ComputerName
             Name                           = 'SqlLogin'
@@ -262,7 +262,7 @@ Configuration SQL {
         }
 
         Write-Verbose 'Creating configuration for the SqlServerRole' -Verbose
-        SqlServerRole SqlServerRole         {
+        SqlServerRole SqlServerRole {
             Ensure         = 'Present'
             ServerRoleName = 'sysadmin'
             ServerName     = $ComputerName
@@ -292,28 +292,32 @@ Configuration SQL {
         script Flag5 {
 
             TestScript = {
-                    $cmd = 'osql.exe -E -S {0} -Q "SET NOCOUNT ON; SELECT Count([flag]) FROM [{1}].[dbo].[CTF]"' -f $using:ComputerName, $using:DatabaseName
-                    $res = Invoke-Expression $cmd
-                    if(($res -join [environment]::NewLine) -match '(?m)-+\s+(?<flags>\d)') {
-                        $matches['flags'] -eq 1
-                    } else {
-                        $false
-                    }
-             }
-
-            GetScript = {
-                    $cmd = 'osql.exe -E -S {0} -Q "SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{1}].[dbo].[CTF]"' -f $using:ComputerName, $using:DatabaseName
-                    $res = Invoke-Expression $cmd
-                    ($res -join [environment]::NewLine) -match '(?m)-+\s+(?<flags>flag5:.*\})'
-                    @{Return = $matches['flags']}
+                $res = Invoke-LudusMagnusSqlQuery -CommandText (
+                    'SET NOCOUNT ON; SELECT Count([flag]) FROM [{1}].[dbo].[CTF]' -f $using:ComputerName, $using:DatabaseName
+                ) -Instance ('{0}\{1}', $env:ComputerName, 'MSSQLSERVER')
+                if (($res -join [environment]::NewLine) -match '(?m)-+\s+(?<flags>\d)') {
+                    0 -lt $matches['flags']
+                }
+                else {
+                    $false
+                }
             }
 
-            SetScript = {
-                    $cookedFlagValue = "'flag5:{$using:Flag5Value}"
-                    $cmd = 'osql.exe -E -S {0} -Q "USE [{1}]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ({2})"' -f $using:ComputerName, $using:DatabaseName, $cookedFlagValue
-                    $res = Invoke-Expression $cmd
+            GetScript  = {
+                $res = Invoke-LudusMagnusSqlQuery -CommandText (
+                    'SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{1}].[dbo].[CTF]' -f $using:ComputerName, $using:DatabaseName
+                ) -Instance ('{0}\{1}', $env:ComputerName, 'MSSQLSERVER')
+                ($res -join [environment]::NewLine) -match '(?m)-+\s+(?<flags>flag5:.*\})'
+                @{Return = $matches['flags']}
             }
-            DependsOn = '[SqlDatabase]CreateDatabase'
+
+            SetScript  = {
+                Invoke-LudusMagnusSqlNonQuery -CommandText (
+                    'USE [{1}]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ({2})' -f `
+                        $using:ComputerName, $using:DatabaseName, "'flag5:{$using:Flag5Value}"
+                ) -Instance ('{0}\{1}', $env:ComputerName, 'MSSQLSERVER') | Out-Null
+            }
+            DependsOn  = '[SqlDatabase]CreateDatabase'
         }
 
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose
@@ -348,21 +352,21 @@ Configuration IIS {
     Import-DscResource -ModuleName ComputerManagementDsc
     Import-DscResource -ModuleName xWebAdministration
 
-	$ComputerName = $env:ComputerName
-	$DomainName =  Split-Path $DomainCreds.UserName
-	$NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
-		(Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
-	)
-	$DomainCreds.GetNetworkCredential().Password | Out-File -FilePath C:\Windows\Temp\pass.txt
+    $ComputerName = $env:ComputerName
+    $DomainName = Split-Path $DomainCreds.UserName
+    $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
+        (Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
+    )
+    $DomainCreds.GetNetworkCredential().Password | Out-File -FilePath C:\Windows\Temp\pass.txt
 
-	$AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
-		'flag8', (('Fl@g8:{' + $Flag8Value + '}') | ConvertTo-SecureString -AsPlainText -Force)
-	)
+    $AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
+        'flag8', (('Fl@g8:{' + $Flag8Value + '}') | ConvertTo-SecureString -AsPlainText -Force)
+    )
 
-	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
-		$_.InvokeMethod('ReleaseDHCPLease', $null)
-		$_.InvokeMethod('RenewDHCPLease', $null)
-	}
+    Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
+        $_.InvokeMethod('ReleaseDHCPLease', $null)
+        $_.InvokeMethod('RenewDHCPLease', $null)
+    }
 
     node localhost {
 
@@ -380,13 +384,13 @@ Configuration IIS {
         }
 
         Write-Verbose 'Creating configuration for WebContent' -Verbose
-        File WebContent  {
-			Ensure          = 'Present'
-			Type            = 'File'
-			DestinationPath = 'C:\Inetpub\wwwroot\index.htm'
+        File WebContent {
+            Ensure          = 'Present'
+            Type            = 'File'
+            DestinationPath = 'C:\Inetpub\wwwroot\index.htm'
             Contents        = 'Too many permissions on w3wp.exe'
-			DependsOn       = "[WindowsFeatureSet]Web-Server"
-		}
+            DependsOn       = "[WindowsFeatureSet]Web-Server"
+        }
 
         Write-Verbose 'Creating configuration for AppPoolIdentity' -Verbose
         User AppPoolIdentity {
@@ -464,15 +468,15 @@ Configuration FS {
 
     $SharePath = 'C:\Windows\IdentityCRL\production'
     $ComputerName = $env:ComputerName
-    $DomainName =  Split-Path $DomainCreds.UserName
+    $DomainName = Split-Path $DomainCreds.UserName
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         (Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
 
-	Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
-		$_.InvokeMethod('ReleaseDHCPLease', $null)
-		$_.InvokeMethod('RenewDHCPLease', $null)
-	}
+    Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
+        $_.InvokeMethod('ReleaseDHCPLease', $null)
+        $_.InvokeMethod('RenewDHCPLease', $null)
+    }
 
 
     node localhost {
@@ -486,8 +490,8 @@ Configuration FS {
 
         Write-Verbose 'Creating configuration for SalariesFolder' -Verbose
         File SalariesFolder {
-            Ensure = 'Present'
-            Type = 'Directory'
+            Ensure          = 'Present'
+            Type            = 'Directory'
             DestinationPath = $SharePath
         }
 
@@ -521,9 +525,9 @@ Configuration FS {
         Write-Verbose 'Creating configuration for Flag 4' -Verbose
         Script Flag4Stream {
             TestScript = { (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA -ErrorAction SilentlyContinue) -eq $using:Flag4Value }
-            GetScript = { @{ Result = (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA -ErrorAction SilentlyContinue) } }
-            SetScript = { Set-Content -Path "$($using:SharePath)\ADS.md" -Value $using:Flag4Value -Stream DATA }
-            DependsOn = '[File]Flag4'
+            GetScript  = { @{ Result = (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA -ErrorAction SilentlyContinue) } }
+            SetScript  = { Set-Content -Path "$($using:SharePath)\ADS.md" -Value $using:Flag4Value -Stream DATA }
+            DependsOn  = '[File]Flag4'
         }
 
         Write-Verbose 'Creating configuration for ChangeLocalAdminPassword' -Verbose
@@ -559,20 +563,20 @@ function Import-LudusMagnusADUsers {
         $CsvPath = 'C:\Windows\Temp\ADUsers.csv'
     )
 
-    $Domain   = Get-ADDomain
+    $Domain = Get-ADDomain
     $DomainDN = $Domain.DistinguishedName
-    $Forest   = $Domain.Forest
+    $Forest = $Domain.Forest
 
     Write-Verbose 'Creating containers' -Verbose
     $ParentOU = New-ADOrganizationalUnit -Name 'Accounts' -Path $DomainDN -Verbose -ErrorAction Stop -PassThru
-    $UserOU   = New-ADOrganizationalUnit -Name 'Users' -Path $ParentOU.DistinguishedName -Verbose -PassThru -ErrorAction Stop
-    $GroupOU  = New-ADOrganizationalUnit -Name 'Groups' -Path $ParentOU.DistinguishedName -Verbose -PassThru -ErrorAction Stop
+    $UserOU = New-ADOrganizationalUnit -Name 'Users' -Path $ParentOU.DistinguishedName -Verbose -PassThru -ErrorAction Stop
+    $GroupOU = New-ADOrganizationalUnit -Name 'Groups' -Path $ParentOU.DistinguishedName -Verbose -PassThru -ErrorAction Stop
 
     Write-Verbose 'Initializing password policy' -Verbose
     Set-ADDefaultDomainPasswordPolicy $Forest -ComplexityEnabled $False -MaxPasswordAge '1000' -PasswordHistoryCount 0 -MinPasswordAge 0
 
     Write-Verbose 'Initializing departments' -Verbose
-    $Departments =  (
+    $Departments = (
         @{'Name' = 'Accounting'; Positions = ('Manager', 'Accountant', 'Data Entry')},
         @{'Name' = 'Human Resources'; Positions = ('Manager', 'Administrator', 'Officer', 'Coordinator')},
         @{'Name' = 'Sales'; Positions = ('Manager', 'Representative', 'Consultant', 'Senior Vice President')},
@@ -586,34 +590,34 @@ function Import-LudusMagnusADUsers {
     )
 
     Write-Verbose 'Initializing user details' -Verbose
-    $Content  = Import-CSV -Path $CsvPath -ErrorAction Stop | Sort-Object -Property State
+    $Content = Import-CSV -Path $CsvPath -ErrorAction Stop | Sort-Object -Property State
     $Users = $Content |
-        Select-Object  @{Name='Name';Expression={"$($_.GivenName) $($_.Surname)"}},
-            @{Name='SamAccountName'; Expression={"$($_.GivenName)$($_.Surname.Substring(0,3))"}},
-            @{Name='UserPrincipalName'; Expression={"$($_.GivenName)$($_.Surname.Substring(0,3))@$($Forest)"}},
-            @{Name='EmailAddress'; Expression={"$($_.GivenName)$($_.Surname.Substring(0,3))@$($Forest)"}},
-            @{Name='DisplayName'; Expression={"$($_.GivenName) $($_.MiddleInitial). $($_.Surname)"}},
-            @{Name='Department'; Expression={$Departments[(Get-Random -Maximum $Departments.Count)].Item('Name') | Get-Random -Count 1}},
-            @{Name='Title'; Expression={$Departments[(Get-Random -Maximum $Departments.Count)].Item('Positions') | Get-Random -Count 1}},
-            @{Name='EmployeeID'; Expression={"$($_.Country)-$((Get-Random -Minimum 0 -Maximum 99999).ToString('000000'))"}},
-            @{Name='Gender'; Expression={"$($_.Gender.SubString(0,1).ToUpper())$($_.Gender.Substring(1).ToLower())"}},
-            @{Name='Enabled'; Expression={$True}},
-            @{Name='PostalCode'; Expression={$_.ZipCode}},
-            @{Name='OfficePhone'; Expression={$_.TelephoneNumber}},
-            @{Name='PasswordNeverExpires'; Expression={$True}},
-            @{Name='AccountPassword'; Expression={ (ConvertTo-SecureString -String (Initialize-LudusMagnusPassword -Prefix 'P@5z') -AsPlainText -Force)}},
-            GivenName, Surname, City, StreetAddress, State, Country, BirthDate
+        Select-Object  @{Name = 'Name'; Expression = {"$($_.GivenName) $($_.Surname)"}},
+    @{Name = 'SamAccountName'; Expression = {"$($_.GivenName)$($_.Surname.Substring(0,3))"}},
+    @{Name = 'UserPrincipalName'; Expression = {"$($_.GivenName)$($_.Surname.Substring(0,3))@$($Forest)"}},
+    @{Name = 'EmailAddress'; Expression = {"$($_.GivenName)$($_.Surname.Substring(0,3))@$($Forest)"}},
+    @{Name = 'DisplayName'; Expression = {"$($_.GivenName) $($_.MiddleInitial). $($_.Surname)"}},
+    @{Name = 'Department'; Expression = {$Departments[(Get-Random -Maximum $Departments.Count)].Item('Name') | Get-Random -Count 1}},
+    @{Name = 'Title'; Expression = {$Departments[(Get-Random -Maximum $Departments.Count)].Item('Positions') | Get-Random -Count 1}},
+    @{Name = 'EmployeeID'; Expression = {"$($_.Country)-$((Get-Random -Minimum 0 -Maximum 99999).ToString('000000'))"}},
+    @{Name = 'Gender'; Expression = {"$($_.Gender.SubString(0,1).ToUpper())$($_.Gender.Substring(1).ToLower())"}},
+    @{Name = 'Enabled'; Expression = {$True}},
+    @{Name = 'PostalCode'; Expression = {$_.ZipCode}},
+    @{Name = 'OfficePhone'; Expression = {$_.TelephoneNumber}},
+    @{Name = 'PasswordNeverExpires'; Expression = {$True}},
+    @{Name = 'AccountPassword'; Expression = { (ConvertTo-SecureString -String (Initialize-LudusMagnusPassword -Prefix 'P@5z') -AsPlainText -Force)}},
+    GivenName, Surname, City, StreetAddress, State, Country, BirthDate
 
     Write-Verbose 'Creating groups' -Verbose
     foreach ($Department In $Departments.Name) {
         $CreateADGroup = @{
-            Name = $Department
+            Name            = $Department
             SamAccountName  = $Department
             GroupCategory   = 'Security'
             GroupScope      = 'Global'
             Path            = $GroupOU.DistinguishedName
             Description     = "Security Group for all $Department users"
-            OtherAttributes = @{"Mail"="$($Department.Replace(' ',''))@$($Forest)"}
+            OtherAttributes = @{"Mail" = "$($Department.Replace(' ',''))@$($Forest)"}
             Verbose         = $true
         }
         New-ADGroup @CreateADGroup | Out-Null
@@ -624,7 +628,8 @@ function Import-LudusMagnusADUsers {
 
         if (!(Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.Country)`"" -SearchBase $UserOU.DistinguishedName -ErrorAction SilentlyContinue)) {
             $CountryOU = New-ADOrganizationalUnit -Name $User.Country -Path $UserOU.DistinguishedName -Country $User.Country -Verbose -PassThru
-        } else {
+        }
+        else {
             $CountryOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.Country)`"" -SearchBase $UserOU.DistinguishedName
         }
 
@@ -633,9 +638,9 @@ function Import-LudusMagnusADUsers {
         }
 
         $DestinationOU = Get-ADOrganizationalUnit -Filter "Name -eq `"$($User.State)`"" -SearchBase $CountryOU.DistinguishedName
-        $userObject = $User | Select-Object -Property @{Name='Path'; Expression={$DestinationOU.DistinguishedName}}, * |
+        $userObject = $User | Select-Object -Property @{Name = 'Path'; Expression = {$DestinationOU.DistinguishedName}}, * |
             New-ADUser -ErrorAction SilentlyContinue -Verbose -PassThru
-        if($userObject) {
+        if ($userObject) {
             Add-ADGroupMember -Identity $User.Department -Members $userObject.SamAccountName -ErrorAction SilentlyContinue -Verbose | Out-Null
         }
     }
@@ -651,16 +656,16 @@ function Import-LudusMagnusADUsers {
 function Initialize-LudusMagnusPassword {
     param([string]$Prefix = '', $Length = 24)
     $Suffix = ([char[]]([char]33..[char]95) + ([char[]]([char]97..[char]126)) + 0..9 |
-        Sort-Object {Get-Random})[0..$Length] -join ''
-    ($Prefix + $Suffix).Substring(0,$Length)
+            Sort-Object {Get-Random})[0..$Length] -join ''
+    ($Prefix + $Suffix).Substring(0, $Length)
 }
 
 function Publish-LudusMagnusModule {
     $psm1Content = ''
     Get-Command -Name *-LudusMagnus* | ForEach-Object {
-        if($_.Name -ne $MyInvocation.MyCommand) {
-            $psm1Content+= "$($_.CommandType) $($_.Name) {$($_.Definition)}"
-            $psm1Content+= [System.Environment]::NewLine
+        if ($_.Name -ne $MyInvocation.MyCommand) {
+            $psm1Content += "$($_.CommandType) $($_.Name) {$($_.Definition)}"
+            $psm1Content += [System.Environment]::NewLine
         }
     }
 
@@ -671,6 +676,58 @@ function Publish-LudusMagnusModule {
     New-Item -Path $modulePath -ItemType File -Name LudusMagnus.psm1 -Value $psm1Content -Force | Out-Null
     New-ModuleManifest -Path $modulePath\LudusMagnus.psd1 -RootModule .\LudusMagnus.psm1 -ModuleVersion ('{0:yyMM}.{0:dd}.{0:HH}.{0:mm}' -f (Get-Date))
 }
+
+
+function Invoke-LudusMagnusSqlNonQuery {
+    param ($InstanceName, $CommandText)
+    $ConnectionString = 'Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $InstanceName
+    $res = 0
+    $Connection = New-Object System.Data.SQLClient.SQLConnection
+    $Connection.ConnectionString = $ConnectionString
+    try {
+        $Connection.Open()
+        $Command = New-Object System.Data.SQLClient.SQLCommand
+        $Command.Connection = $Connection
+        $Command.CommandText = $CommandText
+        $res = $Command.ExecuteNonQuery()
+    }
+    catch {
+        throw 'An error occurred while attempting to open the database connection and execute a command: {0}' -f ($_.Exception.Message)
+    }
+    finally {
+        if ($Connection.State -eq 'Open') {
+            $Connection.Close()
+        }
+    }
+    'Records affected: {0}' -f $res
+}
+
+function Invoke-LudusMagnusSqlQuery {
+    param ($InstanceName, $CommandText)
+    $ConnectionString = 'Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $InstanceName
+    $Connection = New-Object System.Data.SQLClient.SQLConnection
+    $Connection.ConnectionString = $ConnectionString
+    try {
+        $Connection.Open()
+        $Command = New-Object System.Data.SQLClient.SQLCommand
+        $Command.Connection = $Connection
+        $Command.CommandText = $CommandText
+        $adapter = New-Object System.Data.SQLClient.SqlDataAdapter $Command
+        $dataset = New-Object System.Data.DataSet
+        [void] $adapter.Fill($dataSet)
+        $results = $dataSet.Tables | Select-Object -ExpandProperty Rows
+        $results
+    }
+    catch {
+        throw 'An error occurred while attempting to open the database connection and execute a command: {0}' -f ($_.Exception.Message)
+    }
+    finally {
+        if ($Connection.State -eq 'Open') {
+            $Connection.Close()
+        }
+    }
+}
+
 #endregion
 
 
