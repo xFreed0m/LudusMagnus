@@ -608,6 +608,7 @@ function Import-LudusMagnusADUsers {
     @{Name = 'OfficePhone'; Expression = {$_.TelephoneNumber}},
     @{Name = 'PasswordNeverExpires'; Expression = {$True}},
     @{Name = 'AccountPassword'; Expression = { (ConvertTo-SecureString -String (Initialize-LudusMagnusPassword -Prefix 'P@5z') -AsPlainText -Force)}},
+    @{Name = 'Description'; Expression = { "$($_.Surname), $($_.GivenName) from $($_.Country)" }},
     GivenName, Surname, City, StreetAddress, State, Country, BirthDate
 
     $Users[(Get-Random -Minimum 0 -Maximum $Users.Count)].Description = "flag2:{$Flag2Value}"
