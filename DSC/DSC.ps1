@@ -104,7 +104,7 @@ Configuration ADDS {
             SetScript  = {
                 Set-Content -Path 'C:\ADDS\ADUsers.flag' -Value (Get-Date -Format yyyy-MM-dd-HH-mm-ss-ff)
                 Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv' -Flag2Value $using:Flag2Value
-                New-ADUser -Name $JumpAdminCreds.UserName -AccountPassword $JumpAdminCreds.Password -CannotChangePassword $true -Enabled $true
+                New-ADUser -Name $using:JumpAdminCreds.UserName -AccountPassword $using:JumpAdminCreds.Password -CannotChangePassword $true -Enabled $true
             }
             DependsOn  = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
         }
