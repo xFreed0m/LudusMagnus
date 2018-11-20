@@ -300,7 +300,7 @@ Configuration SQL {
             TestScript = {
                 $res = Invoke-LudusMagnusSqlQuery -CommandText (
                     'SET NOCOUNT ON; SELECT Count([flag]) FROM [{1}].[dbo].[CTF]' -f $using:ComputerName, $using:DatabaseName
-                ) -Instance ('{0}\{1}', $env:ComputerName, 'MSSQLSERVER')
+                ) -Instance ('{0}\{1}', $env:ComputerName, '(local)')
                 if (($res -join [environment]::NewLine) -match '(?m)-+\s+(?<flags>\d)') {
                     0 -lt $matches['flags']
                 }
@@ -312,7 +312,7 @@ Configuration SQL {
             GetScript  = {
                 $res = Invoke-LudusMagnusSqlQuery -CommandText (
                     'SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{1}].[dbo].[CTF]' -f $using:ComputerName, $using:DatabaseName
-                ) -Instance ('{0}\{1}', $env:ComputerName, 'MSSQLSERVER')
+                ) -Instance ('{0}\{1}', $env:ComputerName, '(local)')
                 ($res -join [environment]::NewLine) -match '(?m)-+\s+(?<flags>flag5:.*\})'
                 @{Return = $matches['flags']}
             }
@@ -321,7 +321,7 @@ Configuration SQL {
                 Invoke-LudusMagnusSqlNonQuery -CommandText (
                     'USE [{1}]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ({2})' -f `
                         $using:ComputerName, $using:DatabaseName, "'flag5:{$using:Flag5Value}"
-                ) -Instance ('{0}\{1}', $env:ComputerName, 'MSSQLSERVER') | Out-Null
+                ) -Instance ('{0}\{1}', $env:ComputerName, '(local)') | Out-Null
             }
             DependsOn  = '[SqlDatabase]CreateDatabase'
         }
@@ -672,7 +672,7 @@ function Initialize-LudusMagnusPassword {
 
 function Invoke-LudusMagnusSqlNonQuery {
     param ($InstanceName, $CommandText)
-    $ConnectionString = 'Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $InstanceName
+    $ConnectionString = 'Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $InstanceName
     $res = 0
     $Connection = New-Object System.Data.SQLClient.SQLConnection
     $Connection.ConnectionString = $ConnectionString
@@ -696,7 +696,7 @@ function Invoke-LudusMagnusSqlNonQuery {
 
 function Invoke-LudusMagnusSqlQuery {
     param ($InstanceName, $CommandText)
-    $ConnectionString = 'Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $InstanceName
+    $ConnectionString = 'Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $InstanceName
     $Connection = New-Object System.Data.SQLClient.SQLConnection
     $Connection.ConnectionString = $ConnectionString
     try {
