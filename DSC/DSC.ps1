@@ -198,6 +198,7 @@ Configuration SQL {
     Import-DscResource -ModuleName ComputerManagementDsc
     Import-DscResource -ModuleName SqlServerDsc
 
+    Publish-LudusMagnusModule
     $InstanceName = 'MSSQLSERVER'
     $ComputerName = $env:ComputerName
     $DomainName = Split-Path $DomainCreds.UserName
