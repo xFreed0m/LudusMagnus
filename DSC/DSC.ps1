@@ -298,7 +298,6 @@ Configuration SQL {
         script Flag5 {
 
             TestScript = {
-                Import-Module -Name LudusMagnus
                 $ret = $true
                 try {
                     $res = Invoke-LudusMagnusSqlQuery -CommandText (
@@ -316,7 +315,6 @@ Configuration SQL {
             }
 
             GetScript  = {
-                Import-Module -Name LudusMagnus
                 $ret =  @{Return = $null}
                 try {
                     $res = Invoke-LudusMagnusSqlQuery -CommandText (
@@ -330,7 +328,6 @@ Configuration SQL {
             }
 
             SetScript  = {
-                Import-Module -Name LudusMagnus
                 Invoke-LudusMagnusSqlNonQuery -CommandText (
                     "USE [{0}]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ('{2}')" -f `
                         $using:DatabaseName, "flag5:{$using:Flag5Value}"

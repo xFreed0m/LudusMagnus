@@ -50,17 +50,45 @@ Brought to you by @martin77s & @x_Freed0m
 
 "@ -Foreground darkcyan -Background black
 
+# Verify latest version
 $content = (Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master/Start-LudusMagnus.ps1').Content
-if($content -match "(?m)\`$Version = '(?<version>.*)'$") {
-	$onlineVersion = $Matches['version']
-    if($Version -ne $onlineVersion) {
+if ($content -match "(?m)\`$Version = '(?<version>.*)'$") {
+    $onlineVersion = $Matches['version']
+    if ($Version -ne $onlineVersion) {
         $content | Out-File -FilePath $MyInvocation.MyCommand.Path -Force
         Write-Host 'Updated version detected and downloaded, please run this script again'
         exit
     }
 }
 
+# Types and constants
+$source = @'
+public static class Encrypt {
+    public static string EncryptString(string encryptString) {
+        string encryptionKey = "a361b2ffffd211d1aa4b00c04fd7d83a";
+        byte[] salt = System.Text.Encoding.UTF8.GetBytes("*LUDUSMAGNUS*");
+        byte[] clearBytes = System.Text.Encoding.Unicode.GetBytes(encryptString);
+        using (System.Security.Cryptography.Aes encryptor = System.Security.Cryptography.Aes.Create()) {
+            System.Security.Cryptography.Rfc2898DeriveBytes pdb = new System.Security.Cryptography.Rfc2898DeriveBytes(encryptionKey , salt);
+            encryptor.Key = pdb.GetBytes(32);
+            encryptor.IV = pdb.GetBytes(16);
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
+                using (System.Security.Cryptography.CryptoStream cs = new System.Security.Cryptography.CryptoStream(
+                    ms , encryptor.CreateEncryptor() , System.Security.Cryptography.CryptoStreamMode.Write)) {
+                    cs.Write(clearBytes , 0 , clearBytes.Length);
+                    cs.Close();
+                }
+                encryptString = System.Convert.ToBase64String(ms.ToArray());
+            }
+        }
+        return encryptString;
+    }
+}
+'@
+Add-Type -TypeDefinition $source
 $templateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master'
+
+# Prepare the deployment parameters
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
 $deploymentParams = @{
     TemplateUri             = $templateBaseUrl + '/azuredeploy.json'
@@ -74,7 +102,8 @@ $deploymentParams = @{
 }
 
 # Add the flags values as deployment parameters
-$templateParametersUri = ($templateBaseUrl + '/azuredeploy.parameters/azuredeploy.parameters{0}.json') -f (Get-Random -Minimum 0 -Maximum 99)
+$templateParamsId = Get-Random -Minimum 0 -Maximum 99
+$templateParametersUri = ($templateBaseUrl + '/azuredeploy.parameters/azuredeploy.parameters{0}.json') -f $templateParamsId
 $flags = ((Invoke-WebRequest -Uri ($templateParametersUri)).Content | ConvertFrom-Json).parameters
 $flags | Select-Object -Property Flag*Value | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name | ForEach-Object {
     $deploymentParams.Add($_, ($flags | Select-Object -ExpandProperty $_).Value)
@@ -93,19 +122,21 @@ if (-not (Get-AzResourceGroup -Name $resourceGroupName -ErrorAction SilentlyCont
 # Start the deployment
 $deploymentResult = New-AzResourceGroupDeployment @deploymentParams
 if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
-    @'
-    To RDP the Jumpbox use the following details:
-    IPAddress: {0}
-    UserName: {1}
-    Password: {2}
-'@ -f ($deploymentResult.Outputs.Values)[0].Value, ($deploymentResult.Outputs.Values)[1].Value, $flags['VmAdminPassword']
 
-    # Todo: Open the default browser on the WebApp's scoring page (with the deployment return values as paramters)
-    $encodedParams = [System.Net.WebUtility]::UrlEncode(
-        '{0} _ {1} _ {2}' -f ($deploymentResult.Outputs.Values)[0].Value, ($deploymentResult.Outputs.Values)[1].Value, $flags['VmAdminPassword']
+    # Encrypt the parameters
+    $params = [System.Net.WebUtility]::UrlEncode(
+        ('{0}_{1}_{2}_{3}' -f `
+            ($deploymentResult.Outputs.Values)[0].Value, ($deploymentResult.Outputs.Values)[1].Value,
+            $flags['VmAdminPassword'], $templateParamsId
+        )
     )
-    Start-Process ('http://google.com?q={0}' -f $encodedParams)
+    $encryptedParams = [Encrypt]::EncryptString($params)
+
+    # Open the default browser on the WebApp's scoring page
+    Start-Process ('https://{0}/?s={1}' -f ($deploymentResult.Outputs.Values)[2].Value, $encryptedParams)
+
 }
 else {
+    # Deployment error!
     $deploymentResult
 }

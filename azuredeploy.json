@@ -821,6 +821,10 @@
     "JumpBoxAdmin": {
       "type": "string",
       "value": "[variables('JumpBoxAdmin')]"
+    },
+    "WebAppUrl": {
+      "type": "string",
+      "value": "http://localhost/webapp"
     }
   }
 }
