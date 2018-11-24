@@ -7,45 +7,44 @@ $Version = '0.0.0.2'
 
 Write-Host @"
 
-[+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+]
-[+]                                             [+]
-[+]          Welcome to LudusMagnus!            [+]
-[+]                                             [+]
-[+]                                .-.          [+]
-[+]                               {{@}}         [+]
-[+]               <>               8@8          [+]
-[+]             .::::.             888          [+]
-[+]         @\\/W\/\/W\//@         8@8          [+]
-[+]          \\/^\/\/^\//     _    )8(    _     [+]
-[+]           \_O_<>_O_/     (@)__/8@8\__(@)    [+]
-[+]      ____________________ '~"-=):(=-"~'     [+]
-[+]     |<><><>  |  |  <><><>|     |.|          [+]
-[+]     |<>      |  |      <>|     |M|          [+]
-[+]     |<>      |  |      <>|     |'|          [+]
-[+]     |<>   .--------.   <>|     |.|          [+]
-[+]     |     |   ()   |     |     |S|          [+]
-[+]     |_____| (O\/O) |_____|     |'|          [+]
-[+]     |     \   /\   /     |     |.|          [+]
-[+]     |------\  \/  /------|     |R|          [+]
-[+]     |       '.__.'       |     |'|          [+]
-[+]     |        |  |        |     |.|          [+]
-[+]     :        |  |        :     |F|          [+]
-[+]      \<>     |  |     <>/      |'|          [+]
-[+]       \<>    |  |    <>/       |.|          [+]
-[+]        \<>   |  |   <>/        |S|          [+]
-[+]         \<>  |  |  <>/         |'|          [+]
-[+]          \-. |  | .-/          \ /          [+]
-[+]           \  '--'  /            V           [+]
-[+]            \______/                         [+]
-[+]                                             [+]
-[+] Version: $version                            [+]
-[+]                                             [+]
-[+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+]
+[+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+]
+[+]                                                      [+]
+[+]              Welcome to LudusMagnus!                 [+]
+[+]                                                      [+]
+[+]                                     .-.              [+]
+[+]                                    {{@}}             [+]
+[+]                   <>                8@8              [+]
+[+]                 .::::.              888              [+]
+[+]             @\\/W\/\/W\//@          8@8              [+]
+[+]              \\/^\/\/^\//      _    )8(    _         [+]
+[+]               \_O_<>_O_/      (@)__/8@8\__(@)        [+]
+[+]          ____________________  '~"-=):(=-"~'         [+]
+[+]         |<><><>  |  |  <><><>|      |.|              [+]
+[+]         |<>      |  |      <>|      |M|              [+]
+[+]         |<>      |  |      <>|      |'|              [+]
+[+]         |<>   .--------.   <>|      |.|              [+]
+[+]         |     |   ()   |     |      |S|              [+]
+[+]         |_____| (O\/O) |_____|      |'|              [+]
+[+]         |     \   /\   /     |      |.|              [+]
+[+]         |------\  \/  /------|      |R|              [+]
+[+]         |       '.__.'       |      |'|              [+]
+[+]         |        |  |        |      |.|              [+]
+[+]         :        |  |        :      |F|              [+]
+[+]          \<>     |  |     <>/       |'|              [+]
+[+]           \<>    |  |    <>/        |.|              [+]
+[+]            \<>   |  |   <>/         |S|              [+]
+[+]             \<>  |  |  <>/          |'|              [+]
+[+]              \-. |  | .-/           \ /              [+]
+[+]               \  '--'  /             V               [+]
+[+]                \______/                              [+]
+[+]                                                      [+]
+[+] Version: $version                                     [+]
+[+]                                                      [+]
+[+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+]
 
-      Creating the arena might take some time...
-      prepare your weapons until the arena master
-      will call your name.
-      AKA get a coffee until the webapp will pop open.
+Creating the arena might take some time...
+Prepare your weapons until the arena master calls your name
+AKA get a coffee until the webapp will pop open.
 
 Brought to you by @martin77s & @x_Freed0m
 
@@ -95,11 +94,11 @@ $deploymentParams = @{
     TemplateUri             = $templateBaseUrl + '/azuredeploy.json'
     ResourceGroupName       = $ResourceGroupName
     Name                    = ('LudusMagnusDeployment-{0:yyyyMMddHHmm}' -f (Get-Date))
-    Force                   = $true
-    Verbose                 = $true
+    ClientAllowedIP         = '{0}/32' -f $publicIP
     ErrorVariable           = 'deploymentErrors'
     DeploymentDebugLogLevel = 'None' # All | None | RequestContent | ResponseContent
-    ClientAllowedIP         = '{0}/32' -f $publicIP
+    Force                   = $true
+    Verbose                 = $true
 }
 
 # Add the flags values as deployment parameters
