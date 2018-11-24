@@ -66,6 +66,9 @@
     "LinuxScriptUri": "[uri(deployment().properties.templateLink.uri, 'scripts/runlibssh.sh')]",
     "DomainUsersData": "[uri(deployment().properties.templateLink.uri, 'scripts/ADUsers.csv')]",
     "deploymentUrl-VNET": "[uri(deployment().properties.templateLink.uri, 'nestedtemplates/vnet-with-dns-server.json')]",
+    "deploymentUrl-WebApp": "[uri(deployment().properties.templateLink.uri, 'nestedtemplates/webapp-with-deployment.json')]",
+    "WebAppName": "[concat('LudusMagnus-',replace(parameters('ClientAllowedIP'),'.', ''))]",
+    "WebAppFqdn": "[concat(variables('WebAppName'),'.azurewebsites.net')]",
 
     "WindowsImagePublisher": "MicrosoftWindowsServer",
     "WindowsImageOffer": "WindowsServer",
@@ -408,6 +411,29 @@
           }
         }
       }]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "DeployWebApp",
+      "apiVersion": "2016-02-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('ADDSName'), 'CreateADForest')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('deploymentUrl-WebApp')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "WebAppName": {
+            "value": "[variables('WebAppName')]"
+          },
+          "WebAppFqdn": {
+            "value": "[variables('WebAppFqdn')]"
+          }
+        }
+      }
     },
     {
       "type": "Microsoft.Resources/deployments",
@@ -822,9 +848,9 @@
       "type": "string",
       "value": "[variables('JumpBoxAdmin')]"
     },
-    "WebAppUrl": {
+    "WebAppFqdn": {
       "type": "string",
-      "value": "http://localhost/webapp"
+      "value": "[variables('WebAppFqdn')]"
     }
   }
 }

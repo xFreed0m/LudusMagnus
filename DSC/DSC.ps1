@@ -298,40 +298,83 @@ Configuration SQL {
         script Flag5 {
 
             TestScript = {
-                $ret = $true
+                $res = ""; $ret = $false
+                $Connection = New-Object System.Data.SQLClient.SQLConnection
+                $Connection.ConnectionString = 'Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $env:ComputerName
                 try {
-                    $res = Invoke-LudusMagnusSqlQuery -CommandText (
-                        'SET NOCOUNT ON; SELECT Count([flag]) as [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName
-                    ) -Instance $env:ComputerName
-                    if($res.flag) {
-                        1 -eq $res.flag
-                    } else {
-                        $flase
+                    $Connection.Open()
+                    $Command = New-Object System.Data.SQLClient.SQLCommand
+                    $Command.Connection = $Connection
+                    $Command.CommandText = ('SET NOCOUNT ON; SELECT Count([flag]) as [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName)
+                    $adapter = New-Object System.Data.SQLClient.SqlDataAdapter $Command
+                    $dataset = New-Object System.Data.DataSet
+                    [void] $adapter.Fill($dataSet)
+                    $res = $dataSet.Tables | Select-Object -ExpandProperty Rows
+                }
+                catch {
+                    throw 'An error occurred while attempting to open the database connection and execute a command: {0}' -f ($_.Exception.Message)
+                }
+                finally {
+                    if ($Connection.State -eq 'Open') {
+                        $Connection.Close()
                     }
-                 } catch {
-                    $ret = $false
-                 }
+                }
+                if($res.flag) {
+                    $ret = (1 -eq $res.flag)
+                }
                 $ret
             }
 
             GetScript  = {
-                $ret =  @{Return = $null}
+                $res = ""; $ret =  @{Return = $null}
+                $Connection = New-Object System.Data.SQLClient.SQLConnection
+                $Connection.ConnectionString = 'Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $env:ComputerName
                 try {
-                    $res = Invoke-LudusMagnusSqlQuery -CommandText (
-                        'SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName
-                    ) -Instance $env:ComputerName
-                    if($res.flag) {
-                        $ret = @{Return = $res.flag}
+                    $Connection.Open()
+                    $Command = New-Object System.Data.SQLClient.SQLCommand
+                    $Command.Connection = $Connection
+                    $Command.CommandText = ('SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName)
+                    $adapter = New-Object System.Data.SQLClient.SqlDataAdapter $Command
+                    $dataset = New-Object System.Data.DataSet
+                    [void] $adapter.Fill($dataSet)
+                    $res = $dataSet.Tables | Select-Object -ExpandProperty Rows
+                }
+                catch {
+                    throw 'An error occurred while attempting to open the database connection and execute a command: {0}' -f ($_.Exception.Message)
+                }
+                finally {
+                    if ($Connection.State -eq 'Open') {
+                        $Connection.Close()
                     }
-                } catch {}
+                }
+                if($res.flag) {
+                    $ret = @{Return = $res.flag}
+                }
                 $ret
             }
 
             SetScript  = {
-                Invoke-LudusMagnusSqlNonQuery -CommandText (
+                $CommandText = (
                     "USE [{0}]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ('{2}')" -f `
                         $using:DatabaseName, "flag5:{$using:Flag5Value}"
-                ) -Instance $env:ComputerName | Out-Null
+                )
+                $Connection = New-Object System.Data.SQLClient.SQLConnection
+                $Connection.ConnectionString = 'Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $env:ComputerName
+                try {
+                    $Connection.Open()
+                    $Command = New-Object System.Data.SQLClient.SQLCommand
+                    $Command.Connection = $Connection
+                    $Command.CommandText = $CommandText
+                    $Command.ExecuteNonQuery() | Out-Null
+                }
+                catch {
+                    throw 'An error occurred while attempting to open the database connection and execute a command: {0}' -f ($_.Exception.Message)
+                }
+                finally {
+                    if ($Connection.State -eq 'Open') {
+                        $Connection.Close()
+                    }
+                }
             }
             DependsOn  = '[SqlDatabase]CreateDatabase'
         }
