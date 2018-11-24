@@ -305,14 +305,14 @@ Configuration SQL {
                     $Connection.Open()
                     $Command = New-Object System.Data.SQLClient.SQLCommand
                     $Command.Connection = $Connection
-                    $Command.CommandText = ('SET NOCOUNT ON; SELECT Count([flag]) as [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName)
+                    $Command.CommandText = ("SET NOCOUNT ON; USE [{0}]; IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='CTF' AND xtype='U') CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; SELECT Count([flag]) as [flag] FROM [{0}].[dbo].[CTF]" -f $using:DatabaseName)
                     $adapter = New-Object System.Data.SQLClient.SqlDataAdapter $Command
                     $dataset = New-Object System.Data.DataSet
                     [void] $adapter.Fill($dataSet)
                     $res = $dataSet.Tables | Select-Object -ExpandProperty Rows
                 }
                 catch {
-                    throw 'An error occurred while attempting to open the database connection and execute a command: {0}' -f ($_.Exception.Message)
+                    $ret = $false
                 }
                 finally {
                     if ($Connection.State -eq 'Open') {
@@ -333,7 +333,7 @@ Configuration SQL {
                     $Connection.Open()
                     $Command = New-Object System.Data.SQLClient.SQLCommand
                     $Command.Connection = $Connection
-                    $Command.CommandText = ('SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName)
+                    $Command.CommandText = ('USE [{0}]; SET NOCOUNT ON; SELECT TOP 1 [flag] FROM [{0}].[dbo].[CTF]' -f $using:DatabaseName)
                     $adapter = New-Object System.Data.SQLClient.SqlDataAdapter $Command
                     $dataset = New-Object System.Data.DataSet
                     [void] $adapter.Fill($dataSet)
@@ -355,7 +355,7 @@ Configuration SQL {
 
             SetScript  = {
                 $CommandText = (
-                    "USE [{0}]; CREATE TABLE [dbo].[CTF]([flag] [nvarchar](50) NULL) ON [PRIMARY]; INSERT INTO CTF VALUES ('{2}')" -f `
+                    "USE [{0}]; INSERT INTO CTF VALUES ('{1}')" -f `
                         $using:DatabaseName, "flag5:{$using:Flag5Value}"
                 )
                 $Connection = New-Object System.Data.SQLClient.SQLConnection
