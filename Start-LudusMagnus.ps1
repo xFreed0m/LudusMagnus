@@ -39,6 +39,7 @@ Write-Host @"
 [+]            \______/                         [+]
 [+]                                             [+]
 [+] Version: $version                           [+]
+[+]                                             [+]
 [+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+][+]
 
       Creating the arena might take some time...

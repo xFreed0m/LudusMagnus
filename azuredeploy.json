@@ -850,7 +850,7 @@
   "outputs": {
     "IPAddress": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('deployment-publicIpName'))).IpAddress]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('deployment-publicIpName'))).properties.IpAddress]"
     },
     "JumpBoxAdmin": {
       "type": "string",
