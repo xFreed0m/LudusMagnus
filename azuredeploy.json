@@ -67,8 +67,10 @@
     "DomainUsersData": "[uri(deployment().properties.templateLink.uri, 'scripts/ADUsers.csv')]",
     "deploymentUrl-VNET": "[uri(deployment().properties.templateLink.uri, 'nestedtemplates/vnet-with-dns-server.json')]",
     "deploymentUrl-WebApp": "[uri(deployment().properties.templateLink.uri, 'nestedtemplates/webapp-with-deployment.json')]",
-    "WebAppName": "[concat('LudusMagnus-',replace(parameters('ClientAllowedIP'),'.', ''))]",
+    "WebAppName": "[concat('LudusMagnusWebApp-',replace(replace(parameters('ClientAllowedIP'), '.', ''),'/32',''))]",
     "WebAppFqdn": "[concat(variables('WebAppName'),'.azurewebsites.net')]",
+    "WebAppRepositoryUrl": "https://github.com/martin77s/LudusMagnusWebApp.git",
+    "WebAppRepositorybranch": "master",
 
     "WindowsImagePublisher": "MicrosoftWindowsServer",
     "WindowsImageOffer": "WindowsServer",
@@ -431,6 +433,12 @@
           },
           "WebAppFqdn": {
             "value": "[variables('WebAppFqdn')]"
+          },
+          "repoURL": {
+            "value": "[variables('WebAppRepositoryUrl')]"
+          },
+          "branch": {
+            "value": "[variables('WebAppRepositorybranch')]"
           }
         }
       }

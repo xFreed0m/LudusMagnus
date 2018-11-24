@@ -4,11 +4,11 @@
     "parameters": {
         "WebAppName": {
             "type": "string",
-            "defaultValue": "LudusMagnusWebApp"
+            "defaultValue": "[concat('LudusMagnusWebApp', replace(deployment().name,'.',''))]"
         },
         "WebAppFqdn": {
             "type": "string",
-            "defaultValue": "LudusMagnusWebApp.azurewebsites.net"
+            "defaultValue": "[concat('LudusMagnusWebApp', replace(deployment().name,'.',''),'.azurewebsites.net')]"
         },
         "repoURL": {
             "type": "string",
@@ -24,7 +24,7 @@
         }
     },
     "variables": {
-        "WebAppPlanName": "[concat(parameters('WebAppName'),'Plan')]"
+        "WebAppPlanName": "[concat(parameters('WebAppName'),'-Plan')]"
     },
     "resources": [{
             "type": "Microsoft.Web/serverfarms",
