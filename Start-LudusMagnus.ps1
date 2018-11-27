@@ -120,23 +120,35 @@ if (-not (Get-AzResourceGroup -Name $resourceGroupName -ErrorAction SilentlyCont
 }
 
 # Start the deployment
-$deploymentResult = New-AzResourceGroupDeployment @deploymentParams
-if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
+try {
+    $deploymentResult = New-AzResourceGroupDeployment @deploymentParams
+    if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
 
-    # Encrypt the parameters
-    $params = [System.Net.WebUtility]::UrlEncode(
-        ('{0}_{1}_{2}_{3}' -f `
-            ($deploymentResult.Outputs.Values)[0].Value, ($deploymentResult.Outputs.Values)[1].Value,
-            $flags['VmAdminPassword'], $templateParamsId
+        # Encrypt the parameters
+        $params = [System.Net.WebUtility]::UrlEncode(
+            ('{0}_{1}_{2}_{3}' -f `
+                ($deploymentResult.Outputs.Values)[0].Value, ($deploymentResult.Outputs.Values)[1].Value,
+                $flags['VmAdminPassword'], $templateParamsId
+            )
         )
-    )
-    $encryptedParams = [Encrypt]::EncryptString($params)
+        $encryptedParams = [Encrypt]::EncryptString($params)
 
-    # Open the default browser on the WebApp's scoring page
-    Start-Process ('https://{0}/?s={1}' -f ($deploymentResult.Outputs.Values)[2].Value, $encryptedParams)
-
+        # Open the default browser with a custom link to the WebApp
+        $url = 'https://{0}/?s={1}' -f ($deploymentResult.Outputs.Values)[2].Value, $encryptedParams
+        $htmlPath = Join-Path -Path ([IO.Path]::GetTempPath()) -ChildPath "$ResourceGroupName.htm"
+        @"
+        Use the following url to get the deployment details and start the assesment:<br/>
+        <a href='$url'>$url</a><br/><br/>
+        Good luck!
+"@ | Set-Content -Path $htmlPath
+        Start-Process -FilePath $htmlPath
+    }
+    else {
+        # Deployment error!
+        $deploymentResult
+    }
 }
-else {
-    # Deployment error!
-    $deploymentResult
+catch {
+    $_.Exception.GetType().FullName
+    $_.Exception.Message
 }
