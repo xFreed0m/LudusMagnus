@@ -118,7 +118,8 @@ Configuration JumpBox {
 
     param (
         [PSCredential] $DomainCreds,
-        [string] $Flag0Value
+        [string] $Flag0Value,
+        [string] $Flag1Value
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
@@ -127,6 +128,7 @@ Configuration JumpBox {
 
     $ComputerName = $env:ComputerName
     $DomainName = Split-Path $DomainCreds.UserName
+    $flag1Path = Join-Path -Path $env:ProgramFiles -ChildPath 'Common Files\app.exe'
     $DomainCreds.GetNetworkCredential().password | Out-File -FilePath C:\Windows\Temp\pass.txt
 
     Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -163,6 +165,33 @@ Configuration JumpBox {
             Type            = "File"
             DestinationPath = "C:\Windows\system32\drivers\etc\flag0.txt"
             Contents        = "flag0:{$Flag0Value}"
+        }
+
+        Write-Verbose 'Creating configuration for flag 1' -Verbose
+        Script Flag1 {
+            TestScript = {
+                Test-Path $using:flag1Path -PathType Leaf
+            }
+            SetScript = {
+                $tempFile = C:\Windows\flag1.cs
+@"
+using System;
+namespace ns {
+    class Program {
+        static int Main(string[] args) {
+		string FlagValue = "flag1:{$using:Flag1Value}";
+		Console.WriteLine("Bad command or file name");
+		return 0;
+        }
+    }
+}
+"@ | Set-Content -Path $tempFile
+                C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /t:exe /out:"$using:flag1Path" $tempFile /w:1
+                Remove-Item -Path $tempFile -Force -ErrorAction SilentlyContinue
+            }
+            GetScript = {
+                @{Result = (Get-Content -Path $using:flag1Path -Raw -ErrorAction SilentlyContinue)}
+            }
         }
 
         Write-Verbose 'Creating configuration for WaitforDomain' -Verbose

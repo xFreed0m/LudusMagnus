@@ -124,6 +124,8 @@ try {
     $deploymentResult = New-AzResourceGroupDeployment @deploymentParams
     if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
 
+        Write-Host 'Deployment completed!' -Foreground darkcyan -Background black
+
         # Encrypt the parameters
         $params = [System.Net.WebUtility]::UrlEncode(
             ('{0}_{1}_{2}_{3}' -f `
@@ -134,7 +136,7 @@ try {
         $encryptedParams = [Encrypt]::EncryptString($params)
 
         # Open the default browser with a custom link to the WebApp
-        $url = 'https://{0}/?s={1}' -f ($deploymentResult.Outputs.Values)[2].Value, $encryptedParams
+        $url = 'https://{0}/?s={1}' -f (($deploymentResult.Outputs.Values)[2].Value), $encryptedParams
         $htmlPath = Join-Path -Path ([IO.Path]::GetTempPath()) -ChildPath "$ResourceGroupName.htm"
         @"
         Use the following url to get the deployment details and start the assesment:<br/>
