@@ -129,14 +129,14 @@ try {
         # Encrypt the parameters
         $params = [System.Net.WebUtility]::UrlEncode(
             ('{0}_{1}_{2}_{3}' -f `
-                ($deploymentResult.Outputs.Values)[0].Value, ($deploymentResult.Outputs.Values)[1].Value,
+                ($deploymentResult.Outputs["ipAddress"].Value), ($deploymentResult.Outputs["jumpBoxAdmin"].Value),
                 $flags['VmAdminPassword'], $templateParamsId
             )
         )
         $encryptedParams = [Encrypt]::EncryptString($params)
 
         # Open the default browser with a custom link to the WebApp
-        $url = 'https://{0}/?s={1}' -f (($deploymentResult.Outputs.Values)[2].Value), $encryptedParams
+        $url = 'https://{0}/?s={1}' -f ($deploymentResult.Outputs["webAppFqdn"].Value), $encryptedParams
         $htmlPath = Join-Path -Path ([IO.Path]::GetTempPath()) -ChildPath "$ResourceGroupName.htm"
         @"
         Use the following url to get the deployment details and start the assesment:<br/>
