@@ -124,8 +124,6 @@ try {
     $deploymentResult = New-AzResourceGroupDeployment @deploymentParams
     if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
 
-        Write-Host 'Deployment completed!' -Foreground darkcyan -Background black
-
         # Encrypt the parameters
         $params = [System.Net.WebUtility]::UrlEncode(
             ('{0}_{1}_{2}_{3}' -f `
@@ -141,9 +139,13 @@ try {
         @"
         Use the following url to get the deployment details and start the assesment:<br/>
         <a href='$url'>$url</a><br/><br/>
-        Good luck!
 "@ | Set-Content -Path $htmlPath
         Start-Process -FilePath $htmlPath
+        Write-Host @"
+        Deployment completed!
+        Use the following url to get the deployment details and start the assesment:
+        $url
+"@ -Foreground darkcyan -Background black
     }
     else {
         # Deployment error!
