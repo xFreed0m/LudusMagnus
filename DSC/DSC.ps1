@@ -173,7 +173,7 @@ Configuration JumpBox {
                 Test-Path $using:flag1Path -PathType Leaf
             }
             SetScript = {
-                $tempFile = C:\Windows\flag1.cs
+                $tempFile = 'C:\Windows\flag1.cs'
 @"
 using System;
 namespace ns {
