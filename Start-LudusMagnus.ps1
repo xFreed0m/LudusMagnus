@@ -3,7 +3,7 @@
     $Location = 'westeurope'
 )
 
-$Version = '0.0.0.2'
+$Version = '0.0.0.3'
 
 Write-Host @"
 
@@ -128,7 +128,7 @@ try {
         $params = [System.Net.WebUtility]::UrlEncode(
             ('{0}_{1}_{2}_{3}' -f `
                 ($deploymentResult.Outputs["ipAddress"].Value), ($deploymentResult.Outputs["jumpBoxAdmin"].Value),
-                $flags['VmAdminPassword'], $templateParamsId
+                $flags.VmAdminPassword.value, $templateParamsId
             )
         )
         $encryptedParams = [Encrypt]::EncryptString($params)
@@ -142,9 +142,9 @@ try {
 "@ | Set-Content -Path $htmlPath
         Start-Process -FilePath $htmlPath
         Write-Host @"
-        Deployment completed!
-        Use the following url to get the deployment details and start the assesment:
-        $url
+Deployment completed!
+Use the following url to get the deployment details and start the assesment:
+$url
 "@ -Foreground darkcyan -Background black
     }
     else {
