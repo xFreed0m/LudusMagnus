@@ -1,5 +1,4 @@
-# This file will generate different azuredeploy.parameters[N].json files to be used on the LudusMagnus env
-
+# This file generates different azuredeploy.parameters[N].json files to be used on the LudusMagnus env
 
 import json
 import string
@@ -11,14 +10,12 @@ for z in range(0,100): # creating 100 files
         x = ''.join(random.SystemRandom().choice(string.hexdigits) for _ in range(25))
         flags.insert(i, x)
 
-    # azuredeploy_parameters = {}
+
     azuredeploy_parameters = [] # initializing the array for the json content
     azuredeploy_parameters = { # adding the content to the json file
         '$schema': 'https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#',
         'contentVersion': '1.0.0.0',
         'parameters': {
-        "ClientAllowedIP" : { "value": "0.0.0.0/32" },
-        "VmAdminPassword" : { "value": "P@55w0rd!" },
         "Flag0Value" : { "value": flags[0] },
         "Flag1Value" : { "value": flags[1] },
         "Flag2Value" : { "value": flags[2] },
@@ -32,4 +29,4 @@ for z in range(0,100): # creating 100 files
         }
     }
     with open('azuredeploy.parameters' + str(z) + '.json', 'w') as outfile: # creating the json files
-        json.dump(azuredeploy_parameters, outfile, indent=1, sort_keys=True, encoding='utf-8')
+        json.dump(azuredeploy_parameters, outfile, indent=1, sort_keys=True)

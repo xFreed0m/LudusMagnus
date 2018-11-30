@@ -1,42 +1,36 @@
 {
- "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#", 
- "contentVersion": "1.0.0.0", 
+ "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+ "contentVersion": "1.0.0.0",
  "parameters": {
-  "ClientAllowedIP": {
-   "value": "0.0.0.0/32"
-  }, 
   "Flag0Value": {
-   "value": "1b7c6f4B91F1B50c1ECA0fD5c"
-  }, 
+   "value": "c4dC30FA65312972E9Fff4F32"
+  },
   "Flag1Value": {
-   "value": "6b5Ff645041B51dcEB6B4E7CA"
-  }, 
+   "value": "Cf2da9225DFFabC2BCB7a7FB4"
+  },
   "Flag2Value": {
-   "value": "37611D2b27feE2DC57DC6a9D7"
-  }, 
+   "value": "f7D22dCf5Fdd0D0bcCA5B64bd"
+  },
   "Flag3Value": {
-   "value": "c7c5826F8E6e5a4a61F78e79F"
-  }, 
+   "value": "00A0811fB5e15AEAA8E9C38a3"
+  },
   "Flag4Value": {
-   "value": "CE9040e549b0a3EF8B6Cf2f1f"
-  }, 
+   "value": "BA7936724CaA57d391De2Ab1d"
+  },
   "Flag5Value": {
-   "value": "65bCDEb4dC8a0Ec8f27e518A8"
-  }, 
+   "value": "D575cfBd139BBadFfdcb569f2"
+  },
   "Flag6Value": {
-   "value": "86Cddd1FABE6414Ca7c8FcEbF"
-  }, 
+   "value": "8Bb52c4c9c1c2364eE1CF10af"
+  },
   "Flag7Value": {
-   "value": "FE5C7c8FD503C9E90719813E8"
-  }, 
+   "value": "B5b9bf0a22CD9e3C9CfCCB91C"
+  },
   "Flag8Value": {
-   "value": "1B9355C63466E37B4293B23Ba"
-  }, 
+   "value": "3DA01A32D6A36CCFB4eebb2cD"
+  },
   "Flag9Value": {
-   "value": "7C7E57A2c3d91CA9b69E140DF"
-  }, 
-  "VmAdminPassword": {
-   "value": "P@55w0rd!"
+   "value": "BF0ac31ff389A6Dda5Dc91727"
   }
  }
 }

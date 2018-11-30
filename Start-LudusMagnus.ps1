@@ -61,7 +61,7 @@ if ($content -match "(?m)\`$Version = '(?<version>.*)'$") {
     }
 }
 
-# Types and constants
+# Types, constants and helper functions
 $source = @'
 public static class Encrypt {
     public static string EncryptString(string encryptString) {
@@ -87,6 +87,13 @@ public static class Encrypt {
 '@
 Add-Type -TypeDefinition $source
 $templateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master'
+function Initialize-LudusMagnusPassword {
+    param([string]$Prefix = '', $Length = 24)
+    $Suffix = ([char[]]([char]33..[char]95) + ([char[]]([char]97..[char]126)) + 0..9 |
+            Sort-Object {Get-Random})[0..$Length] -join ''
+    ($Prefix + $Suffix).Substring(0, $Length)
+}
+
 
 # Prepare the deployment parameters
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
@@ -95,6 +102,7 @@ $deploymentParams = @{
     ResourceGroupName       = $ResourceGroupName
     Name                    = ('LudusMagnusDeployment-{0:yyyyMMddHHmm}' -f (Get-Date))
     ClientAllowedIP         = '{0}/32' -f $publicIP
+	VmAdminPassword         = ((Initialize-LudusMagnusPassword -Prefix 'P@5z') | ConvertTo-SecureString -AsPlainText -Force)
     ErrorVariable           = 'deploymentErrors'
     DeploymentDebugLogLevel = 'None' # All | None | RequestContent | ResponseContent
     Force                   = $true
@@ -107,11 +115,6 @@ $templateParametersUri = ($templateBaseUrl + '/azuredeploy.parameters/azuredeplo
 $flags = ((Invoke-WebRequest -Uri ($templateParametersUri)).Content | ConvertFrom-Json).parameters
 $flags | Select-Object -Property Flag*Value | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name | ForEach-Object {
     $deploymentParams.Add($_, ($flags | Select-Object -ExpandProperty $_).Value)
-}
-
-# Add the passwords as deployment parameters
-$flags | Select-Object -Property *Password* | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name | ForEach-Object {
-    $deploymentParams.Add($_, ((($flags | Select-Object -ExpandProperty $_).Value) | ConvertTo-SecureString -AsPlainText -Force))
 }
 
 # Verify the ResourceGroup exists
