@@ -96,13 +96,14 @@ function Initialize-LudusMagnusPassword {
 
 
 # Prepare the deployment parameters
+$deploymentName = 'LudusMagnusDeployment-{0:yyyyMMddHHmm}' -f (Get-Date)
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
 $deploymentParams = @{
     TemplateUri             = $templateBaseUrl + '/azuredeploy.json'
     ResourceGroupName       = $ResourceGroupName
-    Name                    = ('LudusMagnusDeployment-{0:yyyyMMddHHmm}' -f (Get-Date))
+    Name                    = $deploymentName
     ClientAllowedIP         = '{0}/32' -f $publicIP
-	VmAdminPassword         = ((Initialize-LudusMagnusPassword -Prefix 'P@5z') | ConvertTo-SecureString -AsPlainText -Force)
+    VmAdminPassword         = ((Initialize-LudusMagnusPassword -Prefix 'P@5z') | ConvertTo-SecureString -AsPlainText -Force)
     ErrorVariable           = 'deploymentErrors'
     DeploymentDebugLogLevel = 'None' # All | None | RequestContent | ResponseContent
     Force                   = $true
@@ -118,13 +119,24 @@ $flags | Select-Object -Property Flag*Value | Get-Member -MemberType Properties 
 }
 
 # Verify the ResourceGroup exists
-if (-not (Get-AzResourceGroup -Name $resourceGroupName -ErrorAction SilentlyContinue)) {
-    New-AzResourceGroup -Name $resourceGroupName -Location $Location | Out-Null
+if (-not (Get-AzResourceGroup -Name $ResourceGroupName -ErrorAction SilentlyContinue)) {
+    New-AzResourceGroup -Name $ResourceGroupName -Location $Location | Out-Null
 }
 
 # Start the deployment
+$iCount = 1; $maxWait = 45
 try {
-    $deploymentResult = New-AzResourceGroupDeployment @deploymentParams
+    $deploymentJob = New-AzResourceGroupDeployment @deploymentParams -AsJob
+    :waitDeployment do {
+        Write-Verbose -Message 'Waiting for the deployment to complete...' -Verbose
+        Start-Sleep -Seconds 60
+        $iCount++
+        if ($iCount -ge $maxWait) { break waitDeployment }
+    } while (
+        (Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $deploymentName).ProvisioningState -eq 'Running'
+    )
+    Remove-Job -Job $deploymentJob
+    $deploymentResult = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $deploymentName
     if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
 
         # Encrypt the parameters
