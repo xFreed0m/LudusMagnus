@@ -614,7 +614,7 @@ Configuration FS {
         Script Flag4Stream {
             TestScript = { (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA -ErrorAction SilentlyContinue) -eq $using:Flag4Value }
             GetScript  = { @{ Result = (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA -ErrorAction SilentlyContinue) } }
-            SetScript  = { Set-Content -Path "$($using:SharePath)\ADS.md" -Value $using:Flag4Value -Stream DATA }
+            SetScript  = { Set-Content -Path "$($using:SharePath)\ADS.md" -Value "flag4:{$($using:Flag4Value)}" -Stream DATA }
             DependsOn  = '[File]Flag4'
         }
 

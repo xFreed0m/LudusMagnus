@@ -97,13 +97,13 @@ function Initialize-LudusMagnusPassword {
 
 # Prepare the deployment parameters
 $deploymentName = 'LudusMagnus-{0:yyyyMMddHHmm}' -f (Get-Date)
-$vmAdminPassword = (Initialize-LudusMagnusPassword -Prefix 'P@5z') | ConvertTo-SecureString -AsPlainText -Force
+$vmAdminPassword = Initialize-LudusMagnusPassword -Prefix 'P@5z'
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
 $deploymentParams = @{
     TemplateUri             = $templateBaseUrl + '/azuredeploy.json'
     ResourceGroupName       = $ResourceGroupName
     Name                    = $deploymentName
-    VmAdminPassword         = $vmAdminPassword
+    VmAdminPassword         = ($vmAdminPassword | ConvertTo-SecureString -AsPlainText -Force)
     ClientAllowedIP         = '{0}/32' -f $publicIP
     ErrorVariable           = 'deploymentErrors'
     DeploymentDebugLogLevel = 'None' # All | None | RequestContent | ResponseContent
