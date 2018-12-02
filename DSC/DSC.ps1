@@ -24,7 +24,7 @@ Configuration ADDS {
     #$interfaceAlias = Get-NetAdapter | Where-Object { $_.Name -Like 'Ethernet*' } | Select-Object -First 1 -ExpandProperty Name
 
     New-Object System.Management.Automation.PSCredential -ArgumentList (
-        'NT AUTHORITY\SYSTEM', ("flag9:{$($using:Flag9Value)}" | ConvertTo-SecureString -AsPlainText -Force)
+        'NT AUTHORITY\SYSTEM', ("flag9:{$Flag9Value}" | ConvertTo-SecureString -AsPlainText -Force)
     ) | Export-CliXml -Path C:\Windows\Temp\flag9.xml
 
     node localhost {
