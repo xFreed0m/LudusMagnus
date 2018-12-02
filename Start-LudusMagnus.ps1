@@ -136,7 +136,6 @@ try {
     } while (
         (Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $deploymentName).ProvisioningState -eq 'Running'
     )
-    Remove-Job -Job $deploymentJob
     $deploymentResult = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $deploymentName
     if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
 
@@ -173,3 +172,6 @@ catch {
     $_.Exception.GetType().FullName
     $_.Exception.Message
 }
+
+# Cleanup
+if ($deploymentJob.State -eq 'Completed') { Remove-Job -Job $deploymentJob }
