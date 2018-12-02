@@ -44,7 +44,7 @@ Write-Host @"
 
 Creating the arena might take some time...
 Prepare your weapons until the arena master calls your name
-AKA get a coffee until the webapp will pop open.
+AKA, get a coffee until your browser opens.
 
 Brought to you by @martin77s & @x_Freed0m
 
@@ -96,14 +96,15 @@ function Initialize-LudusMagnusPassword {
 
 
 # Prepare the deployment parameters
-$deploymentName = 'LudusMagnusDeployment-{0:yyyyMMddHHmm}' -f (Get-Date)
+$deploymentName = 'LudusMagnus-{0:yyyyMMddHHmm}' -f (Get-Date)
+$vmAdminPassword = (Initialize-LudusMagnusPassword -Prefix 'P@5z') | ConvertTo-SecureString -AsPlainText -Force
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
 $deploymentParams = @{
     TemplateUri             = $templateBaseUrl + '/azuredeploy.json'
     ResourceGroupName       = $ResourceGroupName
     Name                    = $deploymentName
+    VmAdminPassword         = $vmAdminPassword
     ClientAllowedIP         = '{0}/32' -f $publicIP
-    VmAdminPassword         = ((Initialize-LudusMagnusPassword -Prefix 'P@5z') | ConvertTo-SecureString -AsPlainText -Force)
     ErrorVariable           = 'deploymentErrors'
     DeploymentDebugLogLevel = 'None' # All | None | RequestContent | ResponseContent
     Force                   = $true
@@ -128,7 +129,7 @@ $iCount = 1; $maxWait = 45
 try {
     $deploymentJob = New-AzResourceGroupDeployment @deploymentParams -AsJob
     :waitDeployment do {
-        Write-Verbose -Message 'Waiting for the deployment to complete...' -Verbose
+        Write-Verbose -Message "Waiting for the deployment to complete... ($iCount)" -Verbose
         Start-Sleep -Seconds 60
         $iCount++
         if ($iCount -ge $maxWait) { break waitDeployment }
@@ -142,8 +143,9 @@ try {
         # Encrypt the parameters
         $params = [System.Net.WebUtility]::UrlEncode(
             ('{0}_{1}_{2}_{3}' -f `
-                ($deploymentResult.Outputs["ipAddress"].Value), ($deploymentResult.Outputs["jumpBoxAdmin"].Value),
-                $flags.VmAdminPassword.value, $templateParamsId
+                ($deploymentResult.Outputs["ipAddress"].Value),
+                ($deploymentResult.Outputs["jumpBoxAdmin"].Value),
+                $vmAdminPassword, $templateParamsId
             )
         )
         $encryptedParams = [Encrypt]::EncryptString($params)
