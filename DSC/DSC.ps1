@@ -8,7 +8,8 @@ Configuration ADDS {
         [PSCredential] $JumpAdminCreds,
         [string] $ADUsersUri,
         [string] $Flag2Value,
-        [string] $Flag9Value
+        [string] $Flag9Value,
+        [PSCredential] $RunnerUser
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
@@ -23,7 +24,7 @@ Configuration ADDS {
     #$interfaceAlias = Get-NetAdapter | Where-Object { $_.Name -Like 'Ethernet*' } | Select-Object -First 1 -ExpandProperty Name
 
     New-Object System.Management.Automation.PSCredential -ArgumentList (
-        'NT AUTHORITY\SYSTEM', ($Flag9Value | ConvertTo-SecureString -AsPlainText -Force)
+        'NT AUTHORITY\SYSTEM', ("flag9:{$($using:Flag9Value)}" | ConvertTo-SecureString -AsPlainText -Force)
     ) | Export-CliXml -Path C:\Windows\Temp\flag9.xml
 
     node localhost {
@@ -103,7 +104,7 @@ Configuration ADDS {
 
             SetScript  = {
                 Set-Content -Path 'C:\ADDS\ADUsers.flag' -Value (Get-Date -Format yyyy-MM-dd-HH-mm-ss-ff)
-                Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv' -Flag2Value $using:Flag2Value
+                Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv' -Flag2Value $using:Flag2Value -RunnerUser $using:RunnerUser
                 New-ADUser -Name $using:JumpAdminCreds.UserName -AccountPassword $using:JumpAdminCreds.Password -CannotChangePassword $true -Enabled $true
             }
             DependsOn  = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
@@ -119,7 +120,8 @@ Configuration JumpBox {
     param (
         [PSCredential] $DomainCreds,
         [string] $Flag0Value,
-        [string] $Flag1Value
+        [string] $Flag1Value,
+        [PSCredential] $RunnerUser
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
@@ -207,6 +209,27 @@ namespace ns {
             DomainName = $DomainName
             Credential = $DomainCreds
             DependsOn  = '[xWaitForADDomain]WaitForDomain'
+        }
+
+        Write-Verbose 'Assigning configuration for user runner' -Verbose
+        Group LocalAdministrators {
+            Ensure           = 'Present'
+            GroupName        = 'Administrators'
+            MembersToInclude = @((Split-Path $DomainCreds.UserName -Leaf), $RunnerUser.UserName)
+            DependsOn        = '[Computer]DomainJoin'
+        }
+
+        Write-Verbose 'Assigning configuration for runner task' -Verbose
+        ScheduledTask RunnerTask {
+            TaskName            = "Custom maintenance tasks"
+            ActionExecutable    = "C:\windows\system32\WindowsPowerShell\v1.0\powershell.exe"
+            ActionArguments     = "-File `"\\nosuchcomputer\scripts\script.ps1`""
+            ScheduleType        = 'Once'
+            RepeatInterval      = '00:01:00'
+            RepetitionDuration  = 'Indefinitely'
+            RunLevel            = 'Highest'
+            ExecuteAsCredential = $RunnerUser
+            DependsOn           = '[Group]LocalAdministrators'
         }
     }
 }
@@ -649,7 +672,8 @@ Configuration FS {
 function Import-LudusMagnusADUsers {
     param(
         [string] $CsvPath = 'C:\Windows\Temp\ADUsers.csv',
-        [string] $Flag2Value
+        [string] $Flag2Value,
+        [PSCredential] $RunnerUser
     )
 
     $Domain = Get-ADDomain
@@ -698,7 +722,13 @@ function Import-LudusMagnusADUsers {
     @{Name = 'Description'; Expression = { "$($_.Surname), $($_.GivenName) from $($_.Country)" }},
     GivenName, Surname, City, StreetAddress, State, Country, BirthDate
 
+    $iPEU = (Get-Random -Minimum 0 -Maximum $Users.Count)
+    $Users[$iPEU].SamAccountName = Split-Path $RunnerUser.UserName -Leaf
+    $Users[$iPEU].AccountPassword = $RunnerUser.Password
     $Users[(Get-Random -Minimum 0 -Maximum $Users.Count)].Description = "flag2:{$Flag2Value}"
+
+
+
 
     Write-Verbose 'Creating groups' -Verbose
     foreach ($Department In $Departments.Name) {

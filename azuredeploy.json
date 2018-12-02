@@ -60,6 +60,8 @@
     "SubnetRef": "[concat(variables('VnetID'), '/subnets/', variables('deployment-vnetSubnetName'))]",
 
     "DomainName": "LudusMagnus.local",
+    "RunnerUser": "runner",
+    "RunnerPassword": "Winter2018",
     "DscExtensionUpdateTagVersion": "[concat(uniqueString(deployment().name))]",
     "DscUrl": "[uri(deployment().properties.templateLink.uri, 'DSC/DSC.zip')]",
     "LinuxCommandToExecute": "runlibssh.sh",
@@ -402,13 +404,18 @@
               },
               "ADUsersUri": "[variables('DomainUsersData')]",
               "Flag2Value": "[parameters('Flag2Value')]",
-              "Flag9Value": "[parameters('Flag9Value')]"
+              "Flag9Value": "[parameters('Flag9Value')]",
+              "RunnerUser": {
+                "UserName": "[concat(variables('DomainName'), '\\', variables('RunnerUser'))]",
+                "Password": "PrivateSettingsRef:RunnerPassword"
+              }
             }
           },
           "protectedSettings": {
             "Items": {
               "DomainPassword": "[variables('DomainPassword')]",
-              "JumpBoxPassword": "[parameters('VmAdminPassword')]"
+              "JumpBoxPassword": "[parameters('VmAdminPassword')]",
+              "RunnerPassword": "[variables('RunnerPassword')]"
             }
           }
         }
@@ -543,12 +550,17 @@
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "Flag0Value": "[parameters('Flag0Value')]",
-              "Flag1Value": "[parameters('Flag1Value')]"
+              "Flag1Value": "[parameters('Flag1Value')]",
+              "RunnerUser": {
+                "UserName": "[concat(variables('DomainName'), '\\', variables('RunnerUser'))]",
+                "Password": "PrivateSettingsRef:RunnerPassword"
+              }
             }
           },
           "protectedSettings": {
             "Items": {
-              "DomainPassword": "[variables('DomainPassword')]"
+              "DomainPassword": "[variables('DomainPassword')]",
+              "RunnerPassword": "[variables('RunnerPassword')]"
             }
           }
         }
