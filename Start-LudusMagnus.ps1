@@ -137,7 +137,7 @@ try {
         $iCount++
         if ($iCount -ge $maxWait) { break waitDeployment }
     } while (
-        (Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $deploymentName).ProvisioningState -eq 'Running'
+        'Failed', 'Running' -contains (Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $deploymentName).ProvisioningState
     )
     $deploymentResult = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $deploymentName
     if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
