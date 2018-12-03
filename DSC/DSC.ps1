@@ -578,7 +578,7 @@ Configuration FS {
     Import-DscResource -ModuleName xSmbShare
     Import-DscResource -ModuleName ComputerManagementDsc
 
-    $SharePath = 'C:\Windows\IdentityCRL\production'
+    $SharePath = 'C:\Windows\Temp'
     $ComputerName = $env:ComputerName
     $DomainName = Split-Path $DomainCreds.UserName
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
