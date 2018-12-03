@@ -551,6 +551,7 @@
               },
               "Flag0Value": "[parameters('Flag0Value')]",
               "Flag1Value": "[parameters('Flag1Value')]",
+              "JumpBoxAdmin": "[variables('JumpBoxAdmin')]",
               "RunnerUser": {
                 "UserName": "[concat(variables('DomainName'), '\\', variables('RunnerUser'))]",
                 "Password": "PrivateSettingsRef:RunnerPassword"

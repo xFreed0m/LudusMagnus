@@ -121,6 +121,7 @@ Configuration JumpBox {
         [PSCredential] $DomainCreds,
         [string] $Flag0Value,
         [string] $Flag1Value,
+        [string] $JumpBoxAdmin,
         [PSCredential] $RunnerUser
     )
 
@@ -215,7 +216,7 @@ namespace ns {
         Group LocalAdministrators {
             Ensure           = 'Present'
             GroupName        = 'Administrators'
-            MembersToInclude = @((Split-Path $DomainCreds.UserName -Leaf), $RunnerUser.UserName)
+            MembersToInclude = @($JumpBoxAdmin, $RunnerUser.UserName)
             DependsOn        = '[Computer]DomainJoin'
         }
 
@@ -588,6 +589,15 @@ Configuration FS {
         $_.InvokeMethod('ReleaseDHCPLease', $null)
         $_.InvokeMethod('RenewDHCPLease', $null)
     }
+
+    $acl = Get-Acl -Path $SharePath
+    $rule = New-Object System.Security.AccessControl.FileSystemAccessRule -ArgumentList (
+        'Everyone', [System.Security.AccessControl.FileSystemRights]::FullControl,
+        ([System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit),
+        [System.Security.AccessControl.PropagationFlags]::None, [System.Security.AccessControl.AccessControlType]::Allow
+    )
+    $acl.SetAccessRule($rule)
+    $acl | Set-Acl -Path $SharePath
 
 
     node localhost {

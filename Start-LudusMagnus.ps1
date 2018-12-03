@@ -111,6 +111,9 @@ $deploymentParams = @{
     Verbose                 = $true
 }
 
+# For debugging only..
+'$vmAdminPassword: ' + $vmAdminPassword
+
 # Add the flags values as deployment parameters
 $templateParamsId = Get-Random -Minimum 0 -Maximum 99
 $templateParametersUri = ($templateBaseUrl + '/azuredeploy.parameters/azuredeploy.parameters{0}.json') -f $templateParamsId
