@@ -112,7 +112,7 @@ $deploymentParams = @{
 }
 
 # For debugging only..
-'$vmAdminPassword: ' + $vmAdminPassword
+Write-Host $vmAdminPassword  -ForegroundColor Black
 
 # Add the flags values as deployment parameters
 $templateParamsId = Get-Random -Minimum 0 -Maximum 99
