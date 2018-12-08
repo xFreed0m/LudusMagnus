@@ -144,7 +144,7 @@ try {
 
         # Encrypt the parameters
         $params = [System.Net.WebUtility]::UrlEncode(
-            ('{0}_{1}_{2}_{3}' -f `
+            ('{0}|||{1}|||{2}|||{3}' -f `
                 ($deploymentResult.Outputs["ipAddress"].Value),
                 ($deploymentResult.Outputs["jumpBoxAdmin"].Value),
                 $vmAdminPassword, $templateParamsId
