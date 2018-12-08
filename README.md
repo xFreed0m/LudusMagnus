@@ -55,6 +55,15 @@ For the complete list of Azure datacenter locations, run the following command:
 Get-AzLocation | Sort-Object -Property DisplayName | Select-Object -Property DisplayName, Location
 ```
 
+## Tearing down the environment
+
+```powershell
+# Get the resource group name:
+Get-AzResourceGroup -Name LudusMagnus*
+# Remove the whole resource group:
+Remove-AzResourceGroup -Name LudusMagnus-yyyyMMddHHmm -Force
+```
+
 ## Updating the Sandbox environment
 
 If you'd like to contribute and/or improve the automation project and environment, you'll need to have a machine ready with several tools
@@ -109,7 +118,7 @@ Once you click the "I'm done" button, the flags you entered will be checked if t
 ## Costs
 
 This code is open-source, therefore free for private use. The Azure Cloud costs for hosting the environment is based on the Azure pricing (which are subject to change based on Microsoft decision).
-While considering that, every new account that signs up for Azure subscriptions receives 200$ for free (Thank you Microsoft!) and currently (Nov 2018) the [costs of running this environment for 24 hours is approx. 130$](https://azure.com/e/1c65e397b7564bfe95e4c735f828e988).
+While considering that, every new account that signs up for Azure subscriptions receives 200$ for free (though limited to 4 cores) and currently (Dec. 2018) the [costs of running this environment for 24 hours is approx. 180$](https://azure.com/e/1c65e397b7564bfe95e4c735f828e988).
 If you set up a different environment (larger or more machines) you can calculate your estimated costs using the [Azure Pricing calculator](https://azure.microsoft.com/en-us/pricing/calculator/)
 
 ## Tips & Hints
