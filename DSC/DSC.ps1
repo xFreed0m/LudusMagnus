@@ -105,7 +105,7 @@ Configuration ADDS {
             SetScript  = {
                 Set-Content -Path 'C:\ADDS\ADUsers.flag' -Value (Get-Date -Format yyyy-MM-dd-HH-mm-ss-ff)
                 Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv' -Flag2Value $using:Flag2Value -RunnerUser $using:RunnerUser
-                New-ADUser -Name $using:JumpAdminCreds.UserName -AccountPassword $using:JumpAdminCreds.Password -CannotChangePassword $true -Enabled $true
+                ###New-ADUser -Name $using:JumpAdminCreds.UserName -AccountPassword $using:JumpAdminCreds.Password -CannotChangePassword $true -Enabled $true
             }
             DependsOn  = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
         }
@@ -244,7 +244,8 @@ Configuration SQL {
         [PSCredential] $DomainCreds,
         [PSCredential] $SQLAuthCreds,
         [string] $DatabaseName,
-        [string] $Flag5Value
+        [string] $Flag5Value,
+        [PSCredential] $RunnerUser
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
@@ -446,6 +447,15 @@ Configuration SQL {
             Credential = $DomainCreds
             DependsOn  = '[xWaitForADDomain]WaitForDomain'
         }
+
+        Write-Verbose 'Assigning configuration for LocalAdministrators' -Verbose
+        Group LocalAdministrators {
+            Ensure           = 'Present'
+            GroupName        = 'Administrators'
+            MembersToInclude = @($DomainCreds.UserName, $RunnerUser.UserName)
+            DependsOn        = '[Computer]DomainJoin'
+        }
+
     }
 }
 

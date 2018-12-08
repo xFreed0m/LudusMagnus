@@ -713,12 +713,17 @@
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "DatabaseName": "[variables('DomainName')]",
-              "Flag5Value": "[parameters('Flag5Value')]"
+              "Flag5Value": "[parameters('Flag5Value')]",
+              "RunnerUser": {
+                "UserName": "[concat(variables('DomainName'), '\\', variables('RunnerUser'))]",
+                "Password": "PrivateSettingsRef:RunnerPassword"
+              }
             }
           },
           "protectedSettings": {
             "Items": {
-              "DomainPassword": "[variables('DomainPassword')]"
+              "DomainPassword": "[variables('DomainPassword')]",
+              "RunnerPassword": "[variables('RunnerPassword')]"
             }
           }
         }
