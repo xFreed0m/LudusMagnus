@@ -29,7 +29,7 @@
     "resources": [{
             "type": "Microsoft.Web/serverfarms",
             "sku": {
-                "name": "F1",
+                "name": "B1",
                 "capacity": 0
             },
             "kind": "app",
@@ -75,6 +75,19 @@
                     "IsManualIntegration": true
                 }
             }]
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "name": "[concat(parameters('WebAppName'), '/web')]",
+            "apiVersion": "2016-08-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('WebAppPlanName'))]"
+            ],
+            "scale": null,
+            "properties": {
+                "alwaysOn": true
+            }
         }
     ]
 }
