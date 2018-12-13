@@ -655,9 +655,9 @@ Configuration FS {
 
         Write-Verbose 'Creating configuration for Flag 4' -Verbose
         Script Flag4Stream {
-            TestScript = { (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA -ErrorAction SilentlyContinue) -eq $using:Flag4Value }
-            GetScript  = { @{ Result = (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream DATA -ErrorAction SilentlyContinue) } }
-            SetScript  = { Set-Content -Path "$($using:SharePath)\ADS.md" -Value "flag4:{$($using:Flag4Value)}" -Stream DATA }
+            TestScript = { (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream FLAG4 -ErrorAction SilentlyContinue) -eq $using:Flag4Value }
+            GetScript  = { @{ Result = (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream FLAG4 -ErrorAction SilentlyContinue) } }
+            SetScript  = { Set-Content -Path "$($using:SharePath)\ADS.md" -Value "flag4:{$($using:Flag4Value)}" -Stream FLAG4 }
             DependsOn  = '[File]Flag4'
         }
 
