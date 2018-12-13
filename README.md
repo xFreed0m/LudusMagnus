@@ -17,6 +17,11 @@ There are many possible use-cases for this tool. Some that we thought of are (we
 
 BTW, The Ludus Magnus (also known as the Great Gladiatorial Training School) was the largest of the gladiatorial schools in Rome. (Wikipedia)
 
+## The training environment
+
+![LudusMagnus Sandbox](https://github.com/martin77s/LudusMagnus/raw/master/other/deployment.png)
+The LudusMagnus Sandbox environment
+
 
 ## Deploy an environment
 
