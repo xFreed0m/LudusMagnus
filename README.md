@@ -94,8 +94,8 @@ Install-Module -Name Az -Scope AllUsers -Force -Verbose
 To install the needed DSC Modules, open PowerShell (pwsh.exe) and run the following command:
 
 ```powershell
-'ComputerManagementDsc', 'SqlServerDsc', 'xActiveDirectory', 'xNetworking', `
-  'xPendingReboot', 'xStorage', 'xPSDesiredStateConfiguration', 'xWebAdministration' | 
+'ComputerManagementDsc', 'NetworkingDsc', 'SqlServerDsc', 'StorageDsc', 'xActiveDirectory', `
+  'xPendingReboot', 'xPSDesiredStateConfiguration', 'xSmbShare', 'xWebAdministration' | 
     ForEach-Object { Install-Module -Name $_ -Scope AllUsers -Force -Verbose }
 ```
 ## Attacker instructions
