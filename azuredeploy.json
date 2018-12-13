@@ -48,17 +48,14 @@
     }
   },
   "variables": {
-
     "deployment-vnetName": "deployment-vnet",
     "deployment-vnetPrefix": "10.0.0.0/16",
     "deployment-vnetSubnetName": "defaultSubnet",
     "deployment-vnetSubnetPrefix": "10.0.0.0/24",
     "deployment-nsgName": "deployment-nsg",
     "deployment-publicIpName": "deployment-publicIp",
-
     "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('deployment-vnetName'))]",
     "SubnetRef": "[concat(variables('VnetID'), '/subnets/', variables('deployment-vnetSubnetName'))]",
-
     "DomainName": "LudusMagnus.local",
     "RunnerUser": "runner",
     "RunnerPassword": "Winter2018",
@@ -73,7 +70,6 @@
     "WebAppFqdn": "[concat(variables('WebAppName'),'.azurewebsites.net')]",
     "WebAppRepositoryUrl": "https://github.com/martin77s/LudusMagnusWebApp.git",
     "WebAppRepositorybranch": "master",
-
     "WindowsImagePublisher": "MicrosoftWindowsServer",
     "WindowsImageOffer": "WindowsServer",
     "LinuxImagePublisher": "Canonical",
@@ -81,44 +77,35 @@
     "SqlImagePublisher": "MicrosoftSQLServer",
     "SqlImageOffer": "SQL2014SP3-WS2012R2",
     "SqlImageSku": "standard",
-    "SqlSaUser": "sa",
-    "SqlSaPassword": "[parameters('VmAdminPassword')]",
-
     "storageAccountType": "Premium_LRS",
     "OSDiskName": "OSDisk",
     "VmAdminUserName": "sadmind",
     "JumpBoxAdmin": "jumpadmin",
     "DomainPassword": "[concat('P@5z~oRD|', guid('random', uniqueString(deployment().name)))]",
-
     "ADDSName": "ADDS",
     "ADDSVmSize": "Standard_DS3_v2",
     "ADDSOsImage": "2012-R2-Datacenter",
     "ADDSNicName": "[concat(variables('ADDSName'), '-NIC')]",
     "ADDSStaticIP": "10.0.0.4",
-
     "JumpBoxName": "JumpBox",
     "JumpBoxVmSize": "Standard_DS3_v2",
     "JumpBoxOsImage": "2016-Datacenter",
     "JumpBoxNicName": "[concat(variables('JumpBoxName'), '-NIC')]",
     "JumpBoxStaticIP": "10.0.0.5",
-
     "IISName": "IIS",
     "IISVmSize": "Standard_DS3_v2",
     "IISOsImage": "2016-Datacenter",
     "IISNicName": "[concat(variables('IISName'), '-NIC')]",
     "IISStaticIP": "10.0.0.6",
-
     "SQLName": "SQL",
     "SQLVmSize": "Standard_DS3_v2",
     "SQLNicName": "[concat(variables('SQLName'), 'NIC')]",
     "SQLStaticIP": "10.0.0.7",
-
     "FSName": "FS",
     "FSVmSize": "Standard_DS3_v2",
     "FSOsImage": "2016-Datacenter-Server-Core",
     "FSNicName": "[concat(variables('FSName'), '-NIC')]",
     "FSStaticIP": "10.0.0.8",
-
     "LinuxName": "LNX",
     "LinuxVmSize": "Standard_DS3_v2",
     "LinuxOsImage": "16.04.0-LTS",
@@ -150,6 +137,9 @@
       "name": "[variables('deployment-nsgName')]",
       "apiVersion": "2018-02-01",
       "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('deployment-publicIpName'))]"
+      ],
       "properties": {
         "securityRules": [{
             "name": "RDP",
@@ -188,8 +178,7 @@
             }
           }
         ]
-      },
-      "dependsOn": []
+      }
     },
     {
       "name": "[variables('JumpBoxNicName')]",
@@ -212,12 +201,12 @@
             },
             "publicIPAddress": {
               "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('deployment-publicIpName'))]"
-            },
-            "networkSecurityGroup": {
-              "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('deployment-nsgName'))]"
             }
           }
-        }]
+        }],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('deployment-nsgName'))]"
+        }
       }
     },
     {
@@ -713,17 +702,12 @@
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "DatabaseName": "[variables('DomainName')]",
-              "Flag5Value": "[parameters('Flag5Value')]",
-              "RunnerUser": {
-                "UserName": "[concat(variables('DomainName'), '\\', variables('RunnerUser'))]",
-                "Password": "PrivateSettingsRef:RunnerPassword"
-              }
+              "Flag5Value": "[parameters('Flag5Value')]"
             }
           },
           "protectedSettings": {
             "Items": {
-              "DomainPassword": "[variables('DomainPassword')]",
-              "RunnerPassword": "[variables('RunnerPassword')]"
+              "DomainPassword": "[variables('DomainPassword')]"
             }
           }
         }
