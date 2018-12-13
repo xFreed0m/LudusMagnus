@@ -106,7 +106,6 @@ Configuration ADDS {
             SetScript  = {
                 Set-Content -Path 'C:\ADDS\ADUsers.flag' -Value (Get-Date -Format yyyy-MM-dd-HH-mm-ss-ff)
                 Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv' -Flag2Value $using:Flag2Value -RunnerUser $using:RunnerUser -SqlSvc $using:SqlSvc
-                ###New-ADUser -Name $using:JumpAdminCreds.UserName -AccountPassword $using:JumpAdminCreds.Password -CannotChangePassword $true -Enabled $true
             }
             DependsOn  = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
         }
@@ -243,10 +242,11 @@ Configuration SQL {
 
     param (
         [PSCredential] $DomainCreds,
-        [PSCredential] $SQLAuthCreds,
         [string] $DatabaseName,
         [string] $Flag5Value,
-        [PSCredential] $RunnerUser
+        [PSCredential] $RunnerUser,
+        [PSCredential] $SqlSvc
+
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
@@ -262,8 +262,6 @@ Configuration SQL {
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         (Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
-    $DomainCreds.GetNetworkCredential().password | Out-File -FilePath C:\Windows\Temp\dpass.txt
-    $NewLocalCreds.GetNetworkCredential().password | Out-File -FilePath C:\Windows\Temp\lpass.txt
 
     Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
         $_.InvokeMethod('ReleaseDHCPLease', $null)
@@ -316,7 +314,7 @@ Configuration SQL {
             Name                           = 'SqlLogin'
             LoginType                      = 'SqlLogin'
             InstanceName                   = $InstanceName
-            LoginCredential                = $SQLAuthCreds
+            LoginCredential                = $SqlSvc
             LoginMustChangePassword        = $false
             LoginPasswordExpirationEnabled = $true
             LoginPasswordPolicyEnforced    = $true
@@ -453,7 +451,7 @@ Configuration SQL {
         Group LocalAdministrators {
             Ensure           = 'Present'
             GroupName        = 'Administrators'
-            MembersToInclude = @($DomainCreds.UserName, $RunnerUser.UserName)
+            MembersToInclude = @($SqlSvc.UserName, $RunnerUser.UserName)
             DependsOn        = '[Computer]DomainJoin'
         }
 
@@ -480,7 +478,6 @@ Configuration IIS {
     $NewLocalCreds = New-Object System.Management.Automation.PSCredential -ArgumentList (
         (Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
-    $DomainCreds.GetNetworkCredential().Password | Out-File -FilePath C:\Windows\Temp\pass.txt
 
     $AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
         'flag8', (('Fl@g8:{' + $Flag8Value + '}') | ConvertTo-SecureString -AsPlainText -Force)
@@ -761,8 +758,6 @@ function Import-LudusMagnusADUsers {
     $Users[(Get-Random -Minimum $segment3+1 -Maximum $Users.Count)].Description = "flag2:{$Flag2Value}"
 
 
-
-
     Write-Verbose 'Creating groups' -Verbose
     foreach ($Department In $Departments.Name) {
         $CreateADGroup = @{
@@ -805,6 +800,9 @@ function Import-LudusMagnusADUsers {
         $DepartmentManager = Get-ADUser -Filter {(Title -eq 'Manager') -and (Department -eq $Department)} | Sort-Object | Select-Object -First 1
         Get-ADUser -Filter {(Department -eq $Department)} | Set-ADUser -Manager $DepartmentManager -Verbose | Out-Null
     }
+
+    Write-Verbose 'Setting Domain Admins additional users' -Verbose
+    Add-ADGroupMember -Identity 'Domain Admins' -Members $Users[$iSqlSvc].SamAccountName
 
 }
 
