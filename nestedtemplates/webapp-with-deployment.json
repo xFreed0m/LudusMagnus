@@ -86,7 +86,7 @@
             "apiVersion": "2016-08-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', variables('WebAppPlanName'))]"
+                "[resourceId('Microsoft.Web/Sites', parameters('WebAppName'))]"
             ],
             "scale": null,
             "properties": {

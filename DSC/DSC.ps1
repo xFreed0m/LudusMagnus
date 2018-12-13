@@ -9,7 +9,8 @@ Configuration ADDS {
         [string] $ADUsersUri,
         [string] $Flag2Value,
         [string] $Flag9Value,
-        [PSCredential] $RunnerUser
+        [PSCredential] $RunnerUser,
+        [PSCredential] $SqlSvc
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
@@ -104,7 +105,7 @@ Configuration ADDS {
 
             SetScript  = {
                 Set-Content -Path 'C:\ADDS\ADUsers.flag' -Value (Get-Date -Format yyyy-MM-dd-HH-mm-ss-ff)
-                Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv' -Flag2Value $using:Flag2Value -RunnerUser $using:RunnerUser
+                Import-LudusMagnusADUsers -CsvPath 'C:\ADDS\ADUsers.csv' -Flag2Value $using:Flag2Value -RunnerUser $using:RunnerUser -SqlSvc $using:SqlSvc
                 ###New-ADUser -Name $using:JumpAdminCreds.UserName -AccountPassword $using:JumpAdminCreds.Password -CannotChangePassword $true -Enabled $true
             }
             DependsOn  = '[xRemoteFile]CreateADUsersCsv', '[xADDomain]CreateForest'
@@ -175,9 +176,9 @@ Configuration JumpBox {
             TestScript = {
                 Test-Path $using:flag1Path -PathType Leaf
             }
-            SetScript = {
+            SetScript  = {
                 $tempFile = 'C:\Windows\flag1.cs'
-@"
+                @"
 using System;
 namespace ns {
     class Program {
@@ -192,7 +193,7 @@ namespace ns {
                 C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /t:exe /out:"$using:flag1Path" $tempFile /w:1
                 Remove-Item -Path $tempFile -Force -ErrorAction SilentlyContinue
             }
-            GetScript = {
+            GetScript  = {
                 @{Result = (Get-Content -Path $using:flag1Path -Raw -ErrorAction SilentlyContinue)}
             }
         }
@@ -373,14 +374,14 @@ Configuration SQL {
                         $Connection.Close()
                     }
                 }
-                if($res.flag) {
+                if ($res.flag) {
                     $ret = (1 -eq $res.flag)
                 }
                 $ret
             }
 
             GetScript  = {
-                $res = ""; $ret =  @{Return = $null}
+                $res = ""; $ret = @{Return = $null}
                 $Connection = New-Object System.Data.SQLClient.SQLConnection
                 $Connection.ConnectionString = 'Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $env:ComputerName
                 try {
@@ -401,7 +402,7 @@ Configuration SQL {
                         $Connection.Close()
                     }
                 }
-                if($res.flag) {
+                if ($res.flag) {
                     $ret = @{Return = $res.flag}
                 }
                 $ret
@@ -689,11 +690,13 @@ Configuration FS {
 
 
 #region Helper functions
+
 function Import-LudusMagnusADUsers {
     param(
         [string] $CsvPath = 'C:\Windows\Temp\ADUsers.csv',
         [string] $Flag2Value,
-        [PSCredential] $RunnerUser
+        [PSCredential] $RunnerUser,
+        [PSCredential] $SqlSvc
     )
 
     $Domain = Get-ADDomain
@@ -742,10 +745,20 @@ function Import-LudusMagnusADUsers {
     @{Name = 'Description'; Expression = { "$($_.Surname), $($_.GivenName) from $($_.Country)" }},
     GivenName, Surname, City, StreetAddress, State, Country, BirthDate
 
-    $iPEU = (Get-Random -Minimum 0 -Maximum $Users.Count)
-    $Users[$iPEU].SamAccountName = Split-Path $RunnerUser.UserName -Leaf
-    $Users[$iPEU].AccountPassword = $RunnerUser.Password
-    $Users[(Get-Random -Minimum 0 -Maximum $Users.Count)].Description = "flag2:{$Flag2Value}"
+    $segment2 = [int](($Users.Count) / 3)
+    $segment3 = [int](($Users.Count) / 3 * 2)
+
+    $iRunner = (Get-Random -Minimum 0 -Maximum $segment2)
+    $Users[$iRunner].SamAccountName = Split-Path $RunnerUser.UserName -Leaf
+    $Users[$iRunner].AccountPassword = $RunnerUser.Password
+
+    $iSqlSvc = (Get-Random -Minimum $segment2+1 -Maximum $segment3)
+    $Users[$iSqlSvc].SamAccountName = Split-Path $SqlSvc.UserName -Leaf
+    $Users[$iSqlSvc].AccountPassword = $SqlSvc.Password
+    $params = @('-a', "MSSQLSvc/SQL.$Forest", $SqlSvc.UserName, '-u')
+    setspn.exe $params
+
+    $Users[(Get-Random -Minimum $segment3+1 -Maximum $Users.Count)].Description = "flag2:{$Flag2Value}"
 
 
 
@@ -857,7 +870,7 @@ function Publish-LudusMagnusModule {
     $hash = @{}
     Get-Command -Name *-LudusMagnus* | ForEach-Object {
         if ($_.Name -ne $MyInvocation.MyCommand) {
-            if(-not ($hash.ContainsKey($_.Name))) {
+            if (-not ($hash.ContainsKey($_.Name))) {
                 $hash.Add($_.Name, 0)
                 $psm1Content += "$($_.CommandType) $($_.Name) {$($_.Definition)}"
                 $psm1Content += [System.Environment]::NewLine
