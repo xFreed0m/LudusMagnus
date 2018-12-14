@@ -749,13 +749,13 @@ function Import-LudusMagnusADUsers {
     $Users[$iRunner].SamAccountName = Split-Path $RunnerUser.UserName -Leaf
     $Users[$iRunner].AccountPassword = $RunnerUser.Password
 
-    $iSqlSvc = (Get-Random -Minimum $segment2+1 -Maximum $segment3)
+    $iSqlSvc = (Get-Random -Minimum ($segment2+1) -Maximum $segment3)
     $Users[$iSqlSvc].SamAccountName = Split-Path $SqlSvc.UserName -Leaf
     $Users[$iSqlSvc].AccountPassword = $SqlSvc.Password
     $params = @('-a', "MSSQLSvc/SQL.$Forest", $SqlSvc.UserName, '-u')
     setspn.exe $params
 
-    $Users[(Get-Random -Minimum $segment3+1 -Maximum $Users.Count)].Description = "flag2:{$Flag2Value}"
+    $Users[(Get-Random -Minimum ($segment3+1) -Maximum $Users.Count)].Description = "flag2:{$Flag2Value}"
 
 
     Write-Verbose 'Creating groups' -Verbose
