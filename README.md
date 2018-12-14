@@ -21,9 +21,9 @@ BTW, The Ludus Magnus (also known as the Great Gladiatorial Training School) was
 
 ![LudusMagnus Sandbox](https://github.com/martin77s/LudusMagnus/raw/master/other/deployment.png)
 
-The basic LudusMagnus training environment consists of 6 servers;
+The basic LudusMagnus training environment consists of six servers and one web application:
 1. Jumbox: a Windows 2016 server, with a minimal set of tools installed.
-2. ADDS: a Windows 2012 R2 server, promoted as a Domain Controller, populated with 2500 users, groups and OU containers.
+2. ADDS: a Windows 2012 R2 server, promoted as a Domain Controller, populated with 2500 users, groups and containers.
 3. FS: a Windows 2016 core server (no UI), that acts as the company's File Server
 4. SQL: a Windows 2016 server with SQL installed, that acts as the company's database server
 5. IIS: a Windows 2008 R2 server with IIS installed, that acts as the company's intranet server
