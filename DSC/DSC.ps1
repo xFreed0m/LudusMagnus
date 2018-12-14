@@ -131,7 +131,7 @@ Configuration JumpBox {
 
     $ComputerName = $env:ComputerName
     $DomainName = Split-Path $DomainCreds.UserName
-    $flag1Path = Join-Path -Path $env:ProgramFiles -ChildPath 'Common Files\app.exe'
+    $flag1Path = Join-Path -Path $env:ProgramFiles -ChildPath 'app.exe'
     $DomainCreds.GetNetworkCredential().password | Out-File -FilePath C:\Windows\Temp\pass.txt
 
     Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -183,7 +183,7 @@ namespace ns {
     class Program {
         static int Main(string[] args) {
 		string FlagValue = "flag1:{$using:Flag1Value}";
-		Console.WriteLine("Bad command or file name");
+		Console.WriteLine("Bad command or flag name");
 		return 0;
         }
     }
