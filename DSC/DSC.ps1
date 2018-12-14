@@ -752,8 +752,6 @@ function Import-LudusMagnusADUsers {
     $iSqlSvc = (Get-Random -Minimum ($segment2+1) -Maximum $segment3)
     $Users[$iSqlSvc].SamAccountName = Split-Path $SqlSvc.UserName -Leaf
     $Users[$iSqlSvc].AccountPassword = $SqlSvc.Password
-    $params = @('-a', "MSSQLSvc/SQL.$Forest", $SqlSvc.UserName, '-u')
-    setspn.exe $params
 
     $Users[(Get-Random -Minimum ($segment3+1) -Maximum $Users.Count)].Description = "flag2:{$Flag2Value}"
 
@@ -800,6 +798,10 @@ function Import-LudusMagnusADUsers {
         $DepartmentManager = Get-ADUser -Filter {(Title -eq 'Manager') -and (Department -eq $Department)} | Sort-Object | Select-Object -First 1
         Get-ADUser -Filter {(Department -eq $Department)} | Set-ADUser -Manager $DepartmentManager -Verbose | Out-Null
     }
+
+    Write-Verbose 'Adding SPNs' -Verbose
+    $params = @('-a', "MSSQLSvc/SQL.$Forest", $SqlSvc.UserName, '-u')
+    setspn.exe $params
 
     Write-Verbose 'Setting Domain Admins additional users' -Verbose
     Add-ADGroupMember -Identity 'Domain Admins' -Members $Users[$iSqlSvc].SamAccountName
