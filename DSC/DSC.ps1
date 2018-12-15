@@ -22,7 +22,6 @@ Configuration ADDS {
 
     Publish-LudusMagnusModule
     $DomainName = Split-Path $DomainCreds.UserName
-    #$interfaceAlias = Get-NetAdapter | Where-Object { $_.Name -Like 'Ethernet*' } | Select-Object -First 1 -ExpandProperty Name
 
     New-Object System.Management.Automation.PSCredential -ArgumentList (
         'NT AUTHORITY\SYSTEM', ("flag9:{$Flag9Value}" | ConvertTo-SecureString -AsPlainText -Force)
@@ -71,13 +70,6 @@ Configuration ADDS {
             DependsOn       = '[File]ADDSFolder'
         }
 
-        # Write-Verbose 'Creating configuration for DnsServerAddress' -Verbose
-        # DnsServerAddress DnsServerAddress {
-        #     Address        = '127.0.0.1'
-        #     InterfaceAlias = $interfaceAlias
-        #     AddressFamily  = 'IPv4'
-        #     DependsOn      = '[WindowsFeature]DNS', '[xRemoteFile]CreateADUsersCsv'
-        # }
 
         Write-Verbose 'Creating configuration for CreateForest' -Verbose
         xADDomain CreateForest {
