@@ -156,13 +156,13 @@ try {
         $url = 'https://{0}/?s={1}' -f ($deploymentResult.Outputs["webAppFqdn"].Value), $encryptedParams
         $htmlPath = Join-Path -Path ([IO.Path]::GetTempPath()) -ChildPath "$ResourceGroupName.htm"
         @"
-        Use the following url to get the deployment details and start the assesment:<br/>
+        Use the following url to get the deployment details and start the assessment:<br/>
         <a href='$url'>$url</a><br/><br/>
 "@ | Set-Content -Path $htmlPath
         Start-Process -FilePath $htmlPath
         Write-Host @"
 Deployment completed!
-Use the following url to get the deployment details and start the assesment:
+Use the following url to get the deployment details and start the assessment:
 $url
 "@ -Foreground darkcyan -Background black
     }
