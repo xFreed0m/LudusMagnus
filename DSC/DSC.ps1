@@ -8,6 +8,7 @@ Configuration ADDS {
         [PSCredential] $JumpAdminCreds,
         [string] $ADUsersUri,
         [string] $Flag2Value,
+        [string] $Flag7Value,
         [string] $Flag9Value,
         [PSCredential] $RunnerUser,
         [PSCredential] $SqlSvc
@@ -84,6 +85,24 @@ Configuration ADDS {
             DependsOn                     = '[WindowsFeature]AD-Domain-Services', '[xRemoteFile]CreateADUsersCsv', '[File]ADDSFolder'
         }
 
+        Write-Verbose 'Creating configuration for Flag7' -Verbose
+        $Flag7Path = 'C:\Users\Default\Pictures\logo.png'
+        script CreateFlag7 {
+
+            TestScript = {
+                Test-Path -Path $using:Flag7Path
+            }
+
+            GetScript  = {
+                @{Result = (Get-Item -Path $using:Flag7Path -ErrorAction SilentlyContinue)}
+            }
+
+            SetScript  = {
+                New-LudusMagnusPngImage -Path $using:Flag7Path -Text "Flag7:{$($using:Flag7Value)}"
+            }
+        }
+
+
         Write-Verbose 'Creating configuration for CreateUsers' -Verbose
         script CreateADUsers {
 
@@ -123,7 +142,7 @@ Configuration JumpBox {
 
     $ComputerName = $env:ComputerName
     $DomainName = Split-Path $DomainCreds.UserName
-    $flag1Path = Join-Path -Path $env:ProgramFiles -ChildPath 'app.exe'
+    $flag1Path = Join-Path -Path 'C:\Users\Default\Documents' -ChildPath 'app.exe'
     $DomainCreds.GetNetworkCredential().password | Out-File -FilePath C:\Windows\Temp\pass.txt
 
     Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -807,6 +826,7 @@ function Initialize-LudusMagnusPassword {
     ($Prefix + $Suffix).Substring(0, $Length)
 }
 
+
 function Invoke-LudusMagnusSqlNonQuery {
     param ($InstanceName, $CommandText)
     $ConnectionString = 'Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $InstanceName
@@ -855,6 +875,20 @@ function Invoke-LudusMagnusSqlQuery {
             $Connection.Close()
         }
     }
+}
+
+function New-LudusMagnusPngImage {
+    param($Path, $Text)
+    Add-Type -AssemblyName System.Drawing
+    $bmp = New-Object -TypeName System.Drawing.Bitmap -ArgumentList 480,60
+    $font = New-Object -TypeName System.Drawing.Font -ArgumentList Consolas, 12
+    $brushBg = [System.Drawing.Brushes]::Black
+    $brushFg = [System.Drawing.Brushes]::Green
+    $graphics = [System.Drawing.Graphics]::FromImage($bmp)
+    $graphics.FillRectangle($brushBg, 0, 0, $bmp.Width, $bmp.Height)
+    $graphics.DrawString($Text, $font ,$brushFg, 10, 10)
+    $graphics.Dispose()
+    $bmp.Save($Path)
 }
 
 function Publish-LudusMagnusModule {

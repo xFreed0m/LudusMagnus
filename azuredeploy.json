@@ -395,6 +395,7 @@
               },
               "ADUsersUri": "[variables('DomainUsersData')]",
               "Flag2Value": "[parameters('Flag2Value')]",
+              "Flag7Value": "[parameters('Flag7Value')]",
               "Flag9Value": "[parameters('Flag9Value')]",
               "RunnerUser": {
                 "UserName": "[concat(variables('DomainName'), '\\', variables('RunnerUser'))]",
