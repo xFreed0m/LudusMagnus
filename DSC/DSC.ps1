@@ -173,6 +173,15 @@ Configuration JumpBox {
                 }
             } )
 
+        Write-Verbose 'Creating configuration for DisableLoopbackCheck' -Verbose
+        Registry DisableLoopbackCheck {
+            Ensure    = 'Present'
+            Key       = 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa'
+            ValueName = 'DisableLoopbackCheck'
+            ValueData = '1'
+            ValueType = 'Dword'
+        }
+		
         Write-Verbose 'Creating configuration for Flag 0' -Verbose
         File Flag0 {
             Ensure          = 'Present'
