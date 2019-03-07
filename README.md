@@ -3,7 +3,7 @@
 
 # LudusMagnus
 
-> _“Force has no place where there is need of skill.”_ – Herodotus 
+> _“Force has no place where there is need of skill.”_ – Herodotus
 
 LudusMagnus is an automation project for creating CTF (Capture-The-Flag) and Defend training environments.
 The main purpose of this tool, is to allow InfoSec professionals (both offensive and defensive) the ability to train for free.
@@ -46,7 +46,7 @@ Then, open PowerShell (pwsh.exe), login to your Azure account and select your su
 ```powershell
 Login-AzAccount
 Get-AzSubscription
-Select-AzSubscription -Subscription '00000000-0000-0000-0000-000000000000'
+Set-AzContext -Subscription '00000000-0000-0000-0000-000000000000'
 ```
 
 And simply run the Start-LudusMagnus.ps1 script (*no need to clone\download the entire repo*):
@@ -108,12 +108,12 @@ To install the needed DSC Modules, open PowerShell (pwsh.exe) and run the follow
 
 ```powershell
 'ComputerManagementDsc', 'NetworkingDsc', 'SqlServerDsc', 'StorageDsc', 'xActiveDirectory', `
-  'xPendingReboot', 'xPSDesiredStateConfiguration', 'xSmbShare', 'xWebAdministration' | 
+  'xPendingReboot', 'xPSDesiredStateConfiguration', 'xSmbShare', 'xWebAdministration' |
     ForEach-Object { Install-Module -Name $_ -Scope AllUsers -Force -Verbose }
 ```
 ## Attacker instructions
 
-After installing all the prerequisites above, run ```pwsh.exe ./Start-LudusMagnus.ps1``` in order to deploy the needed environment. 
+After installing all the prerequisites above, run ```pwsh.exe ./Start-LudusMagnus.ps1``` in order to deploy the needed environment.
 Once the deployment is done, your favourite web browser will open up on the web application page that contains the following:
 1. The JumpBox IP address you should RDP into.
 2. The credentials to use on the JumpBox -  *the JumpBox is your starting point, and the credentials belongs to a user in the domain*.
