@@ -1,9 +1,15 @@
 ﻿param(
-    $ResourceGroupName = ('LudusMagnus-{0:yyyyMMddHHmm}' -f (Get-Date)),
-    $Location = 'westeurope'
+    [string] $ResourceGroupName = ('LudusMagnus-{0:yyyyMMddHHmm}' -f (Get-Date)),
+
+    [string] $Location = 'westeurope',
+
+    [ValidatePattern('\.local$')]
+    [string] $ADFQDN = 'LudusMagnus.local',
+
+    [switch] $DetailedLocalFile
 )
 
-$Version = '0.0.0.3'
+$Version = '0.0.0.4'
 
 Write-Host @"
 
@@ -90,21 +96,22 @@ $templateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/mast
 function Initialize-LudusMagnusPassword {
     param([string]$Prefix = '', $Length = 24)
     $Suffix = ([char[]]([char]33..[char]95) + ([char[]]([char]97..[char]126)) + 0..9 |
-            Sort-Object {Get-Random})[0..$Length] -join ''
+        Sort-Object { Get-Random })[0..$Length] -join ''
     ($Prefix + $Suffix).Substring(0, $Length)
 }
 
 
 # Prepare the deployment parameters
-$deploymentName = 'LudusMagnus-{0:yyyyMMddHHmm}' -f (Get-Date)
+$deploymentName = 'CTF-{0:yyyyMMddHHmmssff}' -f (Get-Date)
 $vmAdminPassword = Initialize-LudusMagnusPassword -Prefix 'P@5z'
 $publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
 $deploymentParams = @{
     TemplateUri             = $templateBaseUrl + '/azuredeploy.json'
     ResourceGroupName       = $ResourceGroupName
     Name                    = $deploymentName
-    VmAdminPassword         = ($vmAdminPassword | ConvertTo-SecureString -AsPlainText -Force)
     ClientAllowedIP         = '{0}/32' -f $publicIP
+    VmAdminPassword         = ($vmAdminPassword | ConvertTo-SecureString -AsPlainText -Force)
+    DomainName              = $ADFQDN
     ErrorVariable           = 'deploymentErrors'
     DeploymentDebugLogLevel = 'None' # All | None | RequestContent | ResponseContent
     Force                   = $true
@@ -141,29 +148,43 @@ try {
     )
     $deploymentResult = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $deploymentName
     if ($deploymentResult.ProvisioningState -eq 'Succeeded') {
-
-        # Encrypt the parameters
-        $params = [System.Net.WebUtility]::UrlEncode(
-            ('{0}|||{1}|||{2}|||{3}' -f `
-                ($deploymentResult.Outputs["ipAddress"].Value),
-                ($deploymentResult.Outputs["jumpBoxAdmin"].Value),
-                $vmAdminPassword, $templateParamsId
-            )
-        )
-        $encryptedParams = [Encrypt]::EncryptString($params)
-
-        # Open the default browser with a custom link to the WebApp
-        $url = 'https://{0}/?s={1}' -f ($deploymentResult.Outputs["webAppFqdn"].Value), $encryptedParams
         $htmlPath = Join-Path -Path ([IO.Path]::GetTempPath()) -ChildPath "$ResourceGroupName.htm"
-        @"
-        Use the following url to get the deployment details and start the assessment:<br/>
-        <a href='$url'>$url</a><br/><br/>
-"@ | Set-Content -Path $htmlPath
+        if ($DetailedLocalFile) {
+            $content = @"
+                <h1>Use the following details to start the assessment:</h1>
+                <table border=1>
+                    <tr><td>The Jumpbox IP is: </td><td>{0}</td></tr>
+                    <tr><td>The UserName is: </td><td>{1}</td></tr>
+                    <tr><td>The Password is: </td><td>{2}</td></tr>
+                    <tr><td>ResourceGroup Name: </td><td>{3}</td></tr>
+                </table>
+"@ -f ($deploymentResult.Outputs["ipAddress"].Value),
+            ($deploymentResult.Outputs["jumpBoxAdmin"].Value),
+            [System.Web.HttpUtility]::HtmlEncode($vmAdminPassword), $ResourceGroupName
+        }
+        else {
+            # Encrypt the parameters
+            $params = [System.Net.WebUtility]::UrlEncode(
+                ('{0}|||{1}|||{2}|||{3}' -f `
+                    ($deploymentResult.Outputs["ipAddress"].Value),
+                    ($deploymentResult.Outputs["jumpBoxAdmin"].Value),
+                    $vmAdminPassword, $templateParamsId
+                )
+            )
+            $encryptedParams = [Encrypt]::EncryptString($params)
+            $url = 'https://{0}/?s={1}' -f ($deploymentResult.Outputs["webAppFqdn"].Value), $encryptedParams
+            $content = @"
+                Use the following url to get the deployment details and start the assessment:<br/>
+                <a href='$url'>$url</a><br/><br/>
+"@
+        }
+        # Open the default browser with the environment details or link
+        $content | Set-Content -Path $htmlPath
         Start-Process -FilePath $htmlPath
         Write-Host @"
 Deployment completed!
-Use the following url to get the deployment details and start the assessment:
-$url
+Use the details in the following file to get the deployment details and start the assessment:
+$htmlPath
 "@ -Foreground darkcyan -Background black
     }
     else {

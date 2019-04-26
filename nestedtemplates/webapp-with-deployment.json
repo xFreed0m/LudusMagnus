@@ -4,11 +4,11 @@
     "parameters": {
         "WebAppName": {
             "type": "string",
-            "defaultValue": "[concat('LudusMagnusWebApp', replace(deployment().name,'.',''))]"
+            "defaultValue": "[concat('WebApp', replace(deployment().name,'.',''))]"
         },
         "WebAppFqdn": {
             "type": "string",
-            "defaultValue": "[concat('LudusMagnusWebApp', replace(deployment().name,'.',''),'.azurewebsites.net')]"
+            "defaultValue": "[concat('WebApp', replace(deployment().name,'.',''),'.azurewebsites.net')]"
         },
         "repoURL": {
             "type": "string",

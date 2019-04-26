@@ -16,6 +16,13 @@
       },
       "defaultValue": "P@55w0rd!"
     },
+    "DomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The sandboxed Active Diretory Domain FQDN"
+      },
+      "defaultValue": "LudusMagnus.local"
+    },
     "Flag0Value": {
       "type": "string"
     },
@@ -56,7 +63,6 @@
     "deployment-publicIpName": "deployment-publicIp",
     "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('deployment-vnetName'))]",
     "SubnetRef": "[concat(variables('VnetID'), '/subnets/', variables('deployment-vnetSubnetName'))]",
-    "DomainName": "LudusMagnus.local",
     "DscUrl": "[uri(deployment().properties.templateLink.uri, 'DSC/DSC.zip')]",
     "LinuxCommandToExecute": "runlibssh.sh",
     "LinuxScriptUri": "[uri(deployment().properties.templateLink.uri, 'scripts/runlibssh.sh')]",
@@ -386,7 +392,7 @@
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
               "DomainCreds": {
-                "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
+                "UserName": "[concat(parameters('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "JumpAdminCreds": {
@@ -398,11 +404,11 @@
               "Flag7Value": "[parameters('Flag7Value')]",
               "Flag9Value": "[parameters('Flag9Value')]",
               "RunnerUser": {
-                "UserName": "[concat(variables('DomainName'), '\\', variables('RunnerUser'))]",
+                "UserName": "[concat(parameters('DomainName'), '\\', variables('RunnerUser'))]",
                 "Password": "PrivateSettingsRef:RunnerPassword"
               },
               "SqlSvc": {
-                "UserName": "[concat(variables('DomainName'), '\\', variables('SqlSvcUser'))]",
+                "UserName": "[concat(parameters('DomainName'), '\\', variables('SqlSvcUser'))]",
                 "Password": "PrivateSettingsRef:SqlSvcPassword"
               }
             }
@@ -545,14 +551,14 @@
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
               "DomainCreds": {
-                "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
+                "UserName": "[concat(parameters('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "Flag0Value": "[parameters('Flag0Value')]",
               "Flag1Value": "[parameters('Flag1Value')]",
               "JumpBoxAdmin": "[variables('JumpBoxAdmin')]",
               "RunnerUser": {
-                "UserName": "[concat(variables('DomainName'), '\\', variables('RunnerUser'))]",
+                "UserName": "[concat(parameters('DomainName'), '\\', variables('RunnerUser'))]",
                 "Password": "PrivateSettingsRef:RunnerPassword"
               }
             }
@@ -627,7 +633,7 @@
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
               "DomainCreds": {
-                "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
+                "UserName": "[concat(parameters('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "Flag8Value": "[parameters('Flag8Value')]"
@@ -702,17 +708,17 @@
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
               "DomainCreds": {
-                "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
+                "UserName": "[concat(parameters('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
-              "DatabaseName": "[variables('DomainName')]",
+              "DatabaseName": "[parameters('DomainName')]",
               "Flag5Value": "[parameters('Flag5Value')]",
               "RunnerUser": {
-                "UserName": "[concat(variables('DomainName'), '\\', variables('RunnerUser'))]",
+                "UserName": "[concat(parameters('DomainName'), '\\', variables('RunnerUser'))]",
                 "Password": "PrivateSettingsRef:RunnerPassword"
               },
               "SqlSvc": {
-                "UserName": "[concat(variables('DomainName'), '\\', variables('SqlSvcUser'))]",
+                "UserName": "[concat(parameters('DomainName'), '\\', variables('SqlSvcUser'))]",
                 "Password": "PrivateSettingsRef:SqlSvcPassword"
               }
             }
@@ -788,7 +794,7 @@
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
               "DomainCreds": {
-                "UserName": "[concat(variables('DomainName'), '\\', variables('VmAdminUserName'))]",
+                "UserName": "[concat(parameters('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
               },
               "Flag3Value": "[parameters('Flag3Value')]",
