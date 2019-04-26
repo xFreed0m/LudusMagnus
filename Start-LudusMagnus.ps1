@@ -6,7 +6,9 @@
     [ValidatePattern('\.local$')]
     [string] $ADFQDN = 'LudusMagnus.local',
 
-    [switch] $DetailedLocalFile
+    [switch] $DetailedLocalFile,
+
+    [string] $ParametersFileId = $null
 )
 
 $Version = '0.0.0.4'
@@ -121,7 +123,12 @@ $deploymentParams = @{
 Write-Host $vmAdminPassword  -ForegroundColor Black
 
 # Add the flags values as deployment parameters
-$templateParamsId = Get-Random -Minimum 0 -Maximum 99
+if ([string]::IsNullOrEmpty($ParametersFileId)) {
+    $templateParamsId = Get-Random -Minimum 0 -Maximum 99
+}
+else {
+    $templateParamsId = $ParametersFileNumber
+}
 $templateParametersUri = ($templateBaseUrl + '/azuredeploy.parameters/azuredeploy.parameters{0}.json') -f $templateParamsId
 $flags = ((Invoke-WebRequest -Uri ($templateParametersUri)).Content | ConvertFrom-Json).parameters
 $flags | Select-Object -Property Flag*Value | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name | ForEach-Object {
