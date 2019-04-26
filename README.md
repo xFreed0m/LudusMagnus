@@ -144,4 +144,4 @@ This environment is supposed to to give you the feeling of a real enterprise, an
 
 ## Credits
 
-> Created by Martin Schvartzman (@martin77s) and Roei Sherman (@x_Freedom)
+> Created by [Martin Schvartzman](https://www.linkedin.com/in/martin77s/) [(@martin77s)](https://twitter.com/martin77s) and [Roei Sherman](https://www.linkedin.com/in/freed0m/) [(@x_Freed0m)](https://twitter.com/x_freed0m)
