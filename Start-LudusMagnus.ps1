@@ -6,12 +6,14 @@
     [ValidatePattern('\.local$')]
     [string] $ADFQDN = 'LudusMagnus.local',
 
+    [string] $ParametersFileId = $null,
+
     [switch] $DetailedLocalFile,
 
-    [string] $ParametersFileId = $null
+    [switch] $SkipWebApp
 )
 
-$Version = '0.0.0.4'
+$Version = '0.0.0.5'
 
 Write-Host @"
 
@@ -113,6 +115,7 @@ $deploymentParams = @{
     ClientAllowedIP         = '{0}/32' -f $publicIP
     VmAdminPassword         = ($vmAdminPassword | ConvertTo-SecureString -AsPlainText -Force)
     DomainName              = $ADFQDN
+    DeployWebApp            = if ($SkipWebApp) { 0 } else { 1 }
     ErrorVariable           = 'deploymentErrors'
     DeploymentDebugLogLevel = 'None' # All | None | RequestContent | ResponseContent
     Force                   = $true

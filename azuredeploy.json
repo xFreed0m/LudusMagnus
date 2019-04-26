@@ -23,6 +23,13 @@
       },
       "defaultValue": "LudusMagnus.local"
     },
+    "DeployWebApp": {
+      "type": "string",
+      "metadata": {
+        "description": "Should the details and scoring WebApp be deployed?"
+      },
+      "defaultValue": "1"
+    },
     "Flag0Value": {
       "type": "string"
     },
@@ -428,6 +435,7 @@
       "type": "Microsoft.Resources/deployments",
       "name": "DeployWebApp",
       "apiVersion": "2016-02-01",
+      "condition": "[equals(parameters('DeployWebApp'), '1')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('ADDSName'), 'CreateADForest')]"
       ],
