@@ -127,7 +127,7 @@ if ([string]::IsNullOrEmpty($ParametersFileId)) {
     $templateParamsId = Get-Random -Minimum 0 -Maximum 99
 }
 else {
-    $templateParamsId = $ParametersFileNumber
+    $templateParamsId = $ParametersFileId
 }
 $templateParametersUri = ($templateBaseUrl + '/azuredeploy.parameters/azuredeploy.parameters{0}.json') -f $templateParamsId
 $flags = ((Invoke-WebRequest -Uri ($templateParametersUri)).Content | ConvertFrom-Json).parameters
