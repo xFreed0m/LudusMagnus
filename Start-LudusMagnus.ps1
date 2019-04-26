@@ -100,7 +100,6 @@ function Initialize-LudusMagnusPassword {
     ($Prefix + $Suffix).Substring(0, $Length)
 }
 
-
 # Prepare the deployment parameters
 $deploymentName = 'CTF-{0:yyyyMMddHHmmssff}' -f (Get-Date)
 $vmAdminPassword = Initialize-LudusMagnusPassword -Prefix 'P@5z'
