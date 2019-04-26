@@ -1,7 +1,7 @@
-![Gladiator](https://natgeo.imgix.net/factsheets/thumbnails/GladiatorSchool.jpg?auto=compress,format&w=1024&h=560&fit=crop)
-(source: https://www.nationalgeographic.com.au/history/gladiator-school-discovery-reveals-hard-lives-of-ancient-warriors.aspx)
-
 # LudusMagnus
+
+![Gladiator](https://natgeo.imgix.net/factsheets/thumbnails/GladiatorSchool.jpg?auto=compress,format&w=1024&h=560&fit=crop)
+(source: <https://www.nationalgeographic.com.au/history/gladiator-school-discovery-reveals-hard-lives-of-ancient-warriors.aspx)>
 
 > _“Force has no place where there is need of skill.”_ – Herodotus
 
@@ -11,6 +11,7 @@ This tool will deploy a closed network in Azure Cloud, that contains different O
 For defenders, when the system is deployed, an Infection monkey (Thank you gurdicore!) vm is deployed as well and will start attacking the environemnt. The defenders role is to identify the attacks and halt them. Currently, we don't have a scoring system for the defenders (but we plan on deploying one in the future)
 
 There are many possible use-cases for this tool. Some that we thought of are (we're happy to get more ideas and feedback from you):
+
 * Training ground for Offensive professionals to test their skills against system in a (small) enterprise-like network
 * Training ground for Defensive professionals to test their skills against system in a (small) enterprise-like network
 * Provide the ability for hiring managers to assess candidates skills in hands-on exercises
@@ -22,14 +23,13 @@ BTW, The Ludus Magnus (also known as the Great Gladiatorial Training School) was
 ![LudusMagnus Sandbox](https://github.com/martin77s/LudusMagnus/raw/master/other/deployment.png)
 
 The basic LudusMagnus training environment consists of six servers and one web application:
+
 1. Jumbox: a Windows 2016 server, with a minimal set of tools installed.
 2. ADDS: a Windows 2012 R2 server, promoted as a Domain Controller, populated with 2500 users, groups and containers.
 3. FS: a Windows 2016 core server (no UI), that acts as the company's File Server
 4. SQL: a Windows 2016 server with SQL installed, that acts as the company's database server
 5. IIS: a Windows 2008 R2 server with IIS installed, that acts as the company's intranet server
 6. Linux: a Ubuntu 16.04 server
-
-
 
 ## Deploy an environment
 
@@ -111,32 +111,37 @@ To install the needed DSC Modules, open PowerShell (pwsh.exe) and run the follow
   'xPendingReboot', 'xPSDesiredStateConfiguration', 'xSmbShare', 'xWebAdministration' |
     ForEach-Object { Install-Module -Name $_ -Scope AllUsers -Force -Verbose }
 ```
+
 ## Attacker instructions
 
 After installing all the prerequisites above, run ```pwsh.exe ./Start-LudusMagnus.ps1``` in order to deploy the needed environment.
 Once the deployment is done, your favourite web browser will open up on the web application page that contains the following:
+
 1. The JumpBox IP address you should RDP into.
 2. The credentials to use on the JumpBox -  *the JumpBox is your starting point, and the credentials belongs to a user in the domain*.
 3. A timer.
 4. 10 flag input field to paste in the flags you would obtain - *You won't be able to know if the flags are valid until you finish the test and submit all of them*.
-4. a "I'm done" submit button that can be used also if you didn't obtained all the flags.
+5. An "I'm done" submit button that can be used also if you didn't obtained all the flags.
 
 Once you click the "I'm done" button, the flags you entered will be checked if they are correct, and a grade will be calculated based on:
-- How many flags are correct
-- The value of each flag (some of them worth more points than others)
-- Overall time elapsed from starting the test until clicking the "I'm done" button
+
+* How many flags are correct
+* The value of each flag (some of them worth more points than others)
+* Overall time elapsed from starting the test until clicking the "I'm done" button
 
 **Once again, make sure to tear-down the environment when you are done, or the costs will be billed to your Azure subscription!**
 
 ## Costs
 
 This code is open-source, therefore free for private use. The Azure Cloud costs for hosting the environment is based on the Azure pricing (which are subject to change based on Microsoft decision).
-While considering that, every new account that signs up for Azure subscriptions receives 200$ for free (though limited to 4 cores) and currently (Dec. 2018) the [costs of running this environment for 24 hours is approx. 180$](https://azure.com/e/1c65e397b7564bfe95e4c735f828e988).
+While considering that, every new account that signs up for Azure subscriptions receives 200$ for free (though limited to 4 cores) and currently (April 2019) the [costs of running this environment for 24 hours is approximately 140$](https://azure.com/e/11f07119e35745ee8f911bb90cce24ae).
 If you set up a different environment (larger or more machines) you can calculate your estimated costs using the [Azure Pricing calculator](https://azure.microsoft.com/en-us/pricing/calculator/)
 
 ## Tips & Hints
+
 We decided to not include any tips or hints.
 This environment is supposed to to give you the feeling of a real enterprise, and yes, we know it's very limited (no guard with tasers..) but we did what we could think of, and if you have more ideas, feel free to add them, or to let us know.
-#
+
+## Credits
 
 > Created by Martin Schvartzman (@martin77s) and Roei Sherman (@x_Freedom)
