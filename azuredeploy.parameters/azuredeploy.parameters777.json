@@ -1,0 +1,36 @@
+{
+ "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+ "contentVersion": "1.0.0.0",
+ "parameters": {
+  "Flag0Value": {
+   "value": "0_2DC98BA28c91BBf587a5f113E"
+  },
+  "Flag1Value": {
+   "value": "1_1B340dBed16332dbB2f6Ca470"
+  },
+  "Flag2Value": {
+   "value": "2_CfdeEaEaFE8ca1e972e7Daf6F"
+  },
+  "Flag3Value": {
+   "value": "3_dA00D5ABbF3fD8AbEbDCf6e9d"
+  },
+  "Flag4Value": {
+   "value": "4_7816EAcDa1Bb4aaAE7fdfA88F"
+  },
+  "Flag5Value": {
+   "value": "5_6DF5EEDea0cAbe0c7Bf65aE42"
+  },
+  "Flag6Value": {
+   "value": "6_0A59C84beD8C5BFa58AcafBad"
+  },
+  "Flag7Value": {
+   "value": "7_d228CF82fABE1fEcA6AB1c31e"
+  },
+  "Flag8Value": {
+   "value": "8_e1B4D3cC84f6fCE180F9e28d9"
+  },
+  "Flag9Value": {
+   "value": "9_75fBA09Ddcd9bCb4Fb5D21dBC"
+  }
+ }
+}

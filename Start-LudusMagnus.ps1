@@ -10,10 +10,15 @@
 
     [switch] $DetailedLocalFile,
 
-    [switch] $SkipWebApp
+    [switch] $SkipWebApp,
+	
+    [switch] $Promiscuous,
+	
+	[ValidatePattern('\w+')]
+	[string] $FlagPrefix = 'Flag'
 )
 
-$Version = '0.0.0.5'
+$Version = '0.0.0.7'
 
 Write-Host @"
 
@@ -107,14 +112,27 @@ function Initialize-LudusMagnusPassword {
 # Prepare the deployment parameters
 $deploymentName = 'CTF-{0:yyyyMMddHHmmssff}' -f (Get-Date)
 $vmAdminPassword = Initialize-LudusMagnusPassword -Prefix 'P@5z'
-$publicIP = (Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
+
+if($Promiscuous) {
+	$clientAllowedIP = '0.0.0.0/0'
+} else {
+	try {
+		$clientAllowedIP = '{0}/32' -f (
+			(Invoke-WebRequest -Uri 'https://api.ipify.org/?format=json').Content | ConvertFrom-Json | Select-Object -ExpandProperty ip
+		)
+	} catch {
+		$clientAllowedIP = '0.0.0.0/0'
+	}
+}
+
 $deploymentParams = @{
     TemplateUri             = $templateBaseUrl + '/azuredeploy.json'
     ResourceGroupName       = $ResourceGroupName
     Name                    = $deploymentName
-    ClientAllowedIP         = '{0}/32' -f $publicIP
+    ClientAllowedIP         = $clientAllowedIP
     VmAdminPassword         = ($vmAdminPassword | ConvertTo-SecureString -AsPlainText -Force)
     DomainName              = $ADFQDN
+	FlagPrefix              = $FlagPrefix
     DeployWebApp            = if ($SkipWebApp) { 0 } else { 1 }
     ErrorVariable           = 'deploymentErrors'
     DeploymentDebugLogLevel = 'None' # All | None | RequestContent | ResponseContent
@@ -144,9 +162,11 @@ if (-not (Get-AzResourceGroup -Name $ResourceGroupName -ErrorAction SilentlyCont
 }
 
 # Start the deployment
-$iCount = 1; $maxWait = 45
+$iCount = 1; $maxWait = 35
 try {
     $deploymentJob = New-AzResourceGroupDeployment @deploymentParams -AsJob
+	$global:__job = $deploymentJob
+	
     :waitDeployment do {
         Write-Verbose -Message "Waiting for the deployment to complete... ($iCount)" -Verbose
         Start-Sleep -Seconds 60

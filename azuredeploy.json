@@ -30,6 +30,13 @@
       },
       "defaultValue": "1"
     },
+	"FlagPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The prefix for the flag string"
+      },
+      "defaultValue": "Flag"
+    },
     "Flag0Value": {
       "type": "string"
     },
@@ -128,7 +135,8 @@
     "LinuxNicName": "[concat(variables('LinuxName'), '-NIC')]",
     "LinuxStaticIP": "10.0.0.9"
   },
-  "resources": [{
+  "resources": [
+	{
       "name": "[variables('deployment-vnetName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[resourceGroup().location]",
@@ -398,6 +406,7 @@
             "configurationFunction": "DSC.ps1\\ADDS",
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
+			  "FlagPrefix": "[parameters('FlagPrefix')]",
               "DomainCreds": {
                 "UserName": "[concat(parameters('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
@@ -558,6 +567,7 @@
             "configurationFunction": "DSC.ps1\\JumpBox",
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
+              "FlagPrefix": "[parameters('FlagPrefix')]",
               "DomainCreds": {
                 "UserName": "[concat(parameters('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
@@ -640,6 +650,7 @@
             "configurationFunction": "DSC.ps1\\IIS",
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
+              "FlagPrefix": "[parameters('FlagPrefix')]",
               "DomainCreds": {
                 "UserName": "[concat(parameters('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
@@ -715,6 +726,7 @@
             "configurationFunction": "DSC.ps1\\SQL",
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
+              "FlagPrefix": "[parameters('FlagPrefix')]",
               "DomainCreds": {
                 "UserName": "[concat(parameters('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
@@ -801,6 +813,7 @@
             "configurationFunction": "DSC.ps1\\FS",
             "modulesUrl": "[variables('DscUrl')]",
             "properties": {
+              "FlagPrefix": "[parameters('FlagPrefix')]",
               "DomainCreds": {
                 "UserName": "[concat(parameters('DomainName'), '\\', variables('VmAdminUserName'))]",
                 "Password": "PrivateSettingsRef:DomainPassword"
@@ -871,7 +884,7 @@
           "autoUpgradeMinorVersion": true,
           "settings": {
             "fileUris": "[split(variables('LinuxScriptUri'), ' ')]",
-            "commandToExecute": "[concat('sudo sh ', variables('LinuxCommandToExecute'), ' \"flag6:{', parameters('Flag6Value'), '}\"')]"
+            "commandToExecute": "[concat('sudo sh ', variables('LinuxCommandToExecute'), ' \"', parameters('FlagPrefix'), ':{', parameters('Flag6Value'), '}\"')]"
           }
         }
       }]

@@ -1,9 +1,11 @@
-#region Configurations
+ #region Configurations
+ 
 Configuration ADDS {
 
     [CmdletBinding()]
 
     param (
+		[string] $FlagPrefix = 'Flag',
         [PSCredential] $DomainCreds,
         [PSCredential] $JumpAdminCreds,
         [string] $ADUsersUri,
@@ -25,7 +27,7 @@ Configuration ADDS {
     $DomainName = Split-Path $DomainCreds.UserName
 
     New-Object System.Management.Automation.PSCredential -ArgumentList (
-        'NT AUTHORITY\SYSTEM', ("flag9:{$Flag9Value}" | ConvertTo-SecureString -AsPlainText -Force)
+        'NT AUTHORITY\SYSTEM', ("$($FlagPrefix):{$Flag9Value}" | ConvertTo-SecureString -AsPlainText -Force)
     ) | Export-CliXml -Path C:\Windows\Temp\flag9.xml
 
     node localhost {
@@ -98,7 +100,7 @@ Configuration ADDS {
             }
 
             SetScript  = {
-                New-LudusMagnusPngImage -Path $using:Flag7Path -Text "Flag7:{$($using:Flag7Value)}"
+                New-LudusMagnusPngImage -Path $using:Flag7Path -Text "$($using:FlagPrefix):{$($using:Flag7Value)}"
             }
         }
 
@@ -129,6 +131,7 @@ Configuration JumpBox {
     [CmdletBinding()]
 
     param (
+		[string] $FlagPrefix = 'Flag',
         [PSCredential] $DomainCreds,
         [string] $Flag0Value,
         [string] $Flag1Value,
@@ -181,13 +184,13 @@ Configuration JumpBox {
             ValueData = '1'
             ValueType = 'Dword'
         }
-		
+
         Write-Verbose 'Creating configuration for Flag 0' -Verbose
         File Flag0 {
             Ensure          = 'Present'
             Type            = "File"
             DestinationPath = "C:\Windows\system32\drivers\etc\flag0.txt"
-            Contents        = "flag0:{$Flag0Value}"
+            Contents        = "$($FlagPrefix):{$Flag0Value}"
         }
 
         Write-Verbose 'Creating configuration for flag 1' -Verbose
@@ -202,7 +205,7 @@ using System;
 namespace ns {
     class Program {
         static int Main(string[] args) {
-		string FlagValue = "flag1:{$using:Flag1Value}";
+		string FlagValue = "$($FlagPrefix):{$using:Flag1Value}";
 		Console.WriteLine("Bad command or flag name");
 		return 0;
         }
@@ -261,6 +264,7 @@ Configuration SQL {
     [CmdletBinding()]
 
     param (
+		[string] $FlagPrefix = 'Flag',
         [PSCredential] $DomainCreds,
         [string] $DatabaseName,
         [string] $Flag5Value,
@@ -429,7 +433,7 @@ Configuration SQL {
             SetScript  = {
                 $CommandText = (
                     "USE [{0}]; INSERT INTO CTF VALUES ('{1}')" -f `
-                        $using:DatabaseName, "flag5:{$using:Flag5Value}"
+                        $using:DatabaseName, "$($using:FlagPrefix):{$using:Flag5Value}"
                 )
                 $Connection = New-Object System.Data.SQLClient.SQLConnection
                 $Connection.ConnectionString = 'Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $env:ComputerName
@@ -484,6 +488,7 @@ Configuration IIS {
     [CmdletBinding()]
 
     param (
+		[string] $FlagPrefix = 'Flag',
         [PSCredential] $DomainCreds,
         [string] $Flag8Value
     )
@@ -499,8 +504,9 @@ Configuration IIS {
         (Split-Path $DomainCreds.UserName -Leaf), (Initialize-LudusMagnusPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
 
+	$identityPassword = ($FlagPrefix + ':{' + $Flag8Value + '}') 
     $AppPoolIdentity = New-Object System.Management.Automation.PSCredential -ArgumentList (
-        'flag8', (('Fl@g8:{' + $Flag8Value + '}') | ConvertTo-SecureString -AsPlainText -Force)
+        'flag8', ( $identityPassword | ConvertTo-SecureString -AsPlainText -Force)
     )
 
     Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=true and DHCPEnabled=true' | ForEach-Object {
@@ -596,6 +602,7 @@ Configuration FS {
     [CmdletBinding()]
 
     param (
+		[string] $FlagPrefix = 'Flag',
         [PSCredential] $DomainCreds,
         [string] $Flag3Value,
         [string] $Flag4Value
@@ -658,7 +665,7 @@ Configuration FS {
             Ensure          = 'Present'
             Type            = 'File'
             DestinationPath = "$($SharePath)\Salaries.csv"
-            Contents        = "CTF,flag3:{$Flag3Value}"
+            Contents        = "CTF,$($FlagPrefix):{$Flag3Value}"
             DependsOn       = '[xSmbShare]SalariesShare'
         }
 
@@ -675,7 +682,7 @@ Configuration FS {
         Script Flag4Stream {
             TestScript = { (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream FLAG4 -ErrorAction SilentlyContinue) -eq $using:Flag4Value }
             GetScript  = { @{ Result = (Get-Content -Path "$($using:SharePath)\ADS.md" -Stream FLAG4 -ErrorAction SilentlyContinue) } }
-            SetScript  = { Set-Content -Path "$($using:SharePath)\ADS.md" -Value "flag4:{$($using:Flag4Value)}" -Stream FLAG4 }
+            SetScript  = { Set-Content -Path "$($using:SharePath)\ADS.md" -Value "$($FlagPrefix):{$($using:Flag4Value)}" -Stream FLAG4 }
             DependsOn  = '[File]Flag4'
         }
 
@@ -702,6 +709,7 @@ Configuration FS {
         }
     }
 }
+
 #endregion
 
 
@@ -710,6 +718,7 @@ Configuration FS {
 
 function Import-LudusMagnusADUsers {
     param(
+		[string] $FlagPrefix = 'Flag',
         [string] $CsvPath = 'C:\Windows\Temp\ADUsers.csv',
         [string] $Flag2Value,
         [PSCredential] $RunnerUser,
@@ -773,7 +782,7 @@ function Import-LudusMagnusADUsers {
     $Users[$iSqlSvc].SamAccountName = Split-Path $SqlSvc.UserName -Leaf
     $Users[$iSqlSvc].AccountPassword = $SqlSvc.Password
 
-    $Users[(Get-Random -Minimum ($segment3+1) -Maximum $Users.Count)].Description = "flag2:{$Flag2Value}"
+    $Users[(Get-Random -Minimum ($segment3+1) -Maximum $Users.Count)].Description = "$($FlagPrefix):{$Flag2Value}"
 
 
     Write-Verbose 'Creating groups' -Verbose
@@ -828,6 +837,7 @@ function Import-LudusMagnusADUsers {
 
 }
 
+
 function Initialize-LudusMagnusPassword {
     param([string]$Prefix = '', $Length = 24)
     $Suffix = ([char[]]([char]33..[char]95) + ([char[]]([char]97..[char]126)) + 0..9 |
@@ -860,6 +870,7 @@ function Invoke-LudusMagnusSqlNonQuery {
     'Records affected: {0}' -f $res
 }
 
+
 function Invoke-LudusMagnusSqlQuery {
     param ($InstanceName, $CommandText)
     $ConnectionString = 'Integrated Security=SSPI;Persist Security Info=False;Data Source={0}' -f $InstanceName
@@ -886,6 +897,7 @@ function Invoke-LudusMagnusSqlQuery {
     }
 }
 
+
 function New-LudusMagnusPngImage {
     param($Path, $Text)
     Add-Type -AssemblyName System.Drawing
@@ -899,6 +911,7 @@ function New-LudusMagnusPngImage {
     $graphics.Dispose()
     $bmp.Save($Path)
 }
+
 
 function Publish-LudusMagnusModule {
     $psm1Content = ''
