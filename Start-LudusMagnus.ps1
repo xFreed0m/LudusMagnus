@@ -66,7 +66,7 @@ Brought to you by @martin77s & @x_Freed0m
 "@ -Foreground darkcyan -Background black
 
 # Verify latest version
-$content = (Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master/Start-LudusMagnus.ps1').Content
+$content = (Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/xFreed0m/LudusMagnus/master/Start-LudusMagnus.ps1').Content
 if ($content -match "(?m)\`$Version = '(?<version>.*)'$") {
     $onlineVersion = $Matches['version']
     if ($Version -ne $onlineVersion) {
@@ -101,7 +101,7 @@ public static class Encrypt {
 }
 '@
 Add-Type -TypeDefinition $source
-$templateBaseUrl = 'https://raw.githubusercontent.com/martin77s/LudusMagnus/master'
+$templateBaseUrl = 'https://raw.githubusercontent.com/xFreed0m/LudusMagnus/master'
 function Initialize-LudusMagnusPassword {
     param([string]$Prefix = '', $Length = 24)
     $Suffix = ([char[]]([char]33..[char]95) + ([char[]]([char]97..[char]126)) + 0..9 |
